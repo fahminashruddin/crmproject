@@ -85,10 +85,17 @@
                     <div x-show="showCredentials" x-transition class="mt-4 bg-blue-50 border border-blue-200 rounded-md p-4 text-sm text-blue-700" style="display: none;">
                         <p class="font-semibold mb-2">Credential untuk testing:</p>
                         <ul class="space-y-1">
+<<<<<<< HEAD
                             <li><strong>Admin:</strong> admin@example.com / password</li>
                             <li><strong>Desain:</strong> desain1@example.com / password</li>
                             <li><strong>Produksi:</strong> produksi1@example.com / password</li>
                             <li><strong>Manajemen:</strong> manajemen1@example.com / password</li>
+=======
+                            <li><strong>Admin:</strong> admin@percetakan.com / admin123</li>
+                            <li><strong>Desain:</strong> design@percetakan.com / design123</li>
+                            <li><strong>Produksi:</strong> production@percetakan.com / production123</li>
+                            <li><strong>Manajemen:</strong> manager@percetakan.com / manager123</li>
+>>>>>>> 74376043c66399b281474aebf87b2c6ecc88c517
                         </ul>
                     </div>
                 </div>

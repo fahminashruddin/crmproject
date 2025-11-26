@@ -119,25 +119,4 @@ Route::middleware([ 'auth', \App\Http\Middleware\SessionTimeout::class ])->group
         Route::get('settings', [AdminController::class, 'settings'])->name('settings');
         Route::get('notifications', [AdminController::class, 'notifications'])->name('notifications');
     });
-
-    // Desain area routes
-    Route::prefix('desain')->name('desain.')->group(function () {
-        Route::get('dashboard', [\App\Http\Controllers\DesainController::class, 'dashboard'])->name('dashboard');
-        Route::get('designs', [\App\Http\Controllers\DesainController::class, 'designs'])->name('designs');
-        Route::get('revisions', [\App\Http\Controllers\DesainController::class, 'revisions'])->name('revisions');
-    });
-
-    // Produksi area routes
-    Route::prefix('produksi')->name('produksi.')->group(function () {
-        Route::get('dashboard', [\App\Http\Controllers\ProduksiController::class, 'dashboard'])->name('dashboard');
-        Route::get('productions', [\App\Http\Controllers\ProduksiController::class, 'productions'])->name('productions');
-        Route::get('issues', [\App\Http\Controllers\ProduksiController::class, 'issues'])->name('issues');
-    });
-
-    // Manajemen area routes
-    Route::prefix('manajemen')->name('manajemen.')->group(function () {
-        Route::get('dashboard', [\App\Http\Controllers\ManajemenController::class, 'dashboard'])->name('dashboard');
-        Route::get('reports', [\App\Http\Controllers\ManajemenController::class, 'reports'])->name('reports');
-        Route::get('analytics', [\App\Http\Controllers\ManajemenController::class, 'analytics'])->name('analytics');
-    });
 });
