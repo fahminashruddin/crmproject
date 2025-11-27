@@ -4,26 +4,21 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\DesainController;
-use App\Http\Controllers\ProduksiController;
-use App\Http\Controllers\ManajemenController;
+use App\Http\Controllers\DesainController; // Pastikan import ini ada
+use App\Http\Controllers\ProduksiController; // Pastikan import ini ada
+use App\Http\Controllers\ManajemenController; // Pastikan import ini ada
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-*/
-
-// === 1. ROUTE UNTUK TAMU (BELUM LOGIN) ===
-Route::middleware(['guest'])->group(function () {
-    
-    // Login Umum
+// ====================================================
+// 1. GUEST AREA (Login Routes)
+// ====================================================
+Route::middleware(['guest', \App\Http\Middleware\SessionTimeout::class])->group(function () {
+    // Generic login
     Route::get('/login', [AuthController::class, 'index'])->name('login');
     Route::post('/login', [AuthController::class, 'authenticate'])->name('login.post');
 
-    // Login Khusus Admin
+    // Role-based login routes
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('login', [AuthController::class, 'index'])->name('login')->defaults('role', 'admin');
         Route::post('login', [AuthController::class, 'authenticate'])->name('login.post')->defaults('role', 'admin');
@@ -48,41 +43,74 @@ Route::middleware(['guest'])->group(function () {
     });
 });
 
-// === 2. HELPER FUNCTION UNTUK REDIRECT ===
-// Fungsi ini diletakkan di luar grup route agar bisa dipanggil
-if (!function_exists('checkRoleRedirect')) {
-    function checkRoleRedirect($roleName) {
-        $role = DB::table('roles')->whereRaw('LOWER(nama_role) = ?', [$roleName])->first();
-        if (!$role) abort(404);
+// ====================================================
+// 2. SHORTCUT REDIRECTS (FIXED)
+// ====================================================
 
-        if (Auth::check()) {
-            if (Auth::user()->role_id == $role->id) {
-                return redirect()->route($roleName . '.dashboard');
-            }
-            abort(403, 'Anda tidak memiliki akses ke halaman ini.');
-        }
-        return redirect()->route($roleName . '.login');
-    }
-}
-
-// === 3. SHORTCUT REDIRECT ===
+// --- ADMIN ---
 Route::get('/admin', function () {
-    return checkRoleRedirect('admin');
+    $role = DB::table('roles')->whereRaw('LOWER(nama_role) = ?', ['admin'])->first();
+    if (!$role) abort(404);
+
+    if (Auth::check()) {
+        if (Auth::user()->role_id == $role->id) {
+            return redirect()->route('admin.dashboard'); // SUDAH BENAR
+        }
+        abort(403, 'Akses ditolak.');
+    }
+    return redirect()->route('admin.login');
 });
+
+// --- DESAIN ---
 Route::get('/desain', function () {
-    return checkRoleRedirect('desain');
+    $role = DB::table('roles')->whereRaw('LOWER(nama_role) = ?', ['desain'])->first();
+    if (!$role) abort(404);
+
+    if (Auth::check()) {
+        if (Auth::user()->user_role_id == $role->id || Auth::user()->role_id == $role->id) {
+            // PERBAIKAN: Redirect spesifik ke desain dashboard
+            return redirect()->route('desain.dashboard');
+        }
+        abort(403, 'Akses ditolak.');
+    }
+    return redirect()->route('desain.login');
 });
+
+// --- PRODUKSI ---
 Route::get('/produksi', function () {
-    return checkRoleRedirect('produksi');
+    $role = DB::table('roles')->whereRaw('LOWER(nama_role) = ?', ['produksi'])->first();
+    if (!$role) abort(404);
+
+    if (Auth::check()) {
+        if (Auth::user()->role_id == $role->id) {
+            // PERBAIKAN: Redirect spesifik ke produksi dashboard
+            return redirect()->route('produksi.dashboard');
+        }
+        abort(403, 'Akses ditolak.');
+    }
+    return redirect()->route('produksi.login');
 });
+
+// --- MANAJEMEN ---
 Route::get('/manajemen', function () {
-    return checkRoleRedirect('manajemen');
+    $role = DB::table('roles')->whereRaw('LOWER(nama_role) = ?', ['manajemen'])->first();
+    if (!$role) abort(404);
+
+    if (Auth::check()) {
+        if (Auth::user()->role_id == $role->id) {
+            // PERBAIKAN: Redirect spesifik ke manajemen dashboard
+            return redirect()->route('manajemen.dashboard');
+        }
+        abort(403, 'Akses ditolak.');
+    }
+    return redirect()->route('manajemen.login');
 });
 
+// ====================================================
+// 3. PROTECTED AREA (Dashboards)
+// ====================================================
+Route::middleware(['auth', \App\Http\Middleware\SessionTimeout::class])->group(function () {
 
-// === 4. ROUTE UNTUK MEMBER (SUDAH LOGIN) ===
-Route::middleware(['auth'])->group(function () {
-    
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     // Dashboard Umum (Fallback)
@@ -90,8 +118,11 @@ Route::middleware(['auth'])->group(function () {
 
     // --- A. AREA ADMIN ---
     Route::prefix('admin')->name('admin.')->group(function () {
+        // Ini akan memanggil view 'admin.dashboard' via Controller
         Route::get('dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
         Route::get('orders', [AdminController::class, 'orders'])->name('orders');
+        Route::post('orders', [AdminController::class, 'storeOrder'])->name('orders.store');
+        Route::patch('orders/{id}/update-status', [AdminController::class, 'updateOrderStatus'])->name('orders.update');
         Route::get('payments', [AdminController::class, 'payments'])->name('payments');
         Route::get('users', [AdminController::class, 'users'])->name('users');
         Route::get('settings', [AdminController::class, 'settings'])->name('settings');
@@ -105,26 +136,18 @@ Route::middleware(['auth'])->group(function () {
         Route::get('revisions', [DesainController::class, 'revisions'])->name('revisions');
     });
 
-    // --- C. AREA PRODUKSI ---
+    // --- PRODUKSI AREA (Yang Sebelumnya Hilang) ---
     Route::prefix('produksi')->name('produksi.')->group(function () {
-        // Dashboard Utama
         Route::get('dashboard', [ProduksiController::class, 'dashboard'])->name('dashboard');
-        
-        // List Antrian
         Route::get('productions', [ProduksiController::class, 'productions'])->name('productions');
-        
-        // Aksi Tombol (POST)
-        Route::post('productions/{id}/start', [ProduksiController::class, 'startProduction'])->name('productions.start');
-        Route::post('productions/{id}/complete', [ProduksiController::class, 'completeProduction'])->name('productions.complete');
-        
-        // Halaman Kendala
         Route::get('issues', [ProduksiController::class, 'issues'])->name('issues');
     });
 
-    // --- D. AREA MANAJEMEN ---
+    // --- MANAJEMEN AREA (Yang Sebelumnya Hilang) ---
     Route::prefix('manajemen')->name('manajemen.')->group(function () {
         Route::get('dashboard', [ManajemenController::class, 'dashboard'])->name('dashboard');
         Route::get('reports', [ManajemenController::class, 'reports'])->name('reports');
         Route::get('analytics', [ManajemenController::class, 'analytics'])->name('analytics');
     });
+
 });

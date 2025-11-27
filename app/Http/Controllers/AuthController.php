@@ -64,6 +64,9 @@ class AuthController extends Controller
             // Ambil user yang sedang login
             $user = Auth::user();
 
+            // Ambil user yang sedang login
+            $user = Auth::user();
+
             // Jika login via role-specific page, pastikan akun punya role yang sesuai
             if ($roleRecord && $user->role_id != $roleRecord->id) {
                 // logout dan kembalikan error
@@ -79,7 +82,7 @@ class AuthController extends Controller
             // === LOGIC REDIRECT BARU ===
             // Ambil nama role user dari database berdasarkan role_id
             $userRole = DB::table('roles')->where('id', $user->role_id)->first();
-            
+
             if ($userRole) {
                 $roleName = strtolower($userRole->nama_role);
 
