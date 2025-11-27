@@ -12,10 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('jenis_layanans', function (Blueprint $table) {
-            $table->id(); // Pengganti id_layanan
+            $table->id();
             $table->string('nama_layanan');
-            $table->text('deskripsi')->nullable();
-            $table->decimal('harga_dasar', 10, 2)->default(0); // '10, 2' artinya total 10 digit, 2 di belakang koma (baik untuk uang)
+            
+            // Tambahkan kolom ini agar seeder tidak error
+            $table->decimal('harga_satuan', 15, 2)->default(0); 
+            
             $table->timestamps();
         });
     }

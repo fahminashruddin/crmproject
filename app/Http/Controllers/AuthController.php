@@ -60,6 +60,9 @@ class AuthController extends Controller
         // Coba login (Auth::attempt otomatis mengecek hash password)
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
+            
+            // Ambil user yang sedang login
+            $user = Auth::user();
 
             // Ambil user yang sedang login
             $user = Auth::user();

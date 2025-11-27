@@ -24,16 +24,19 @@ Route::middleware(['guest', \App\Http\Middleware\SessionTimeout::class])->group(
         Route::post('login', [AuthController::class, 'authenticate'])->name('login.post')->defaults('role', 'admin');
     });
 
+    // Login Khusus Desain
     Route::prefix('desain')->name('desain.')->group(function () {
         Route::get('login', [AuthController::class, 'index'])->name('login')->defaults('role', 'desain');
         Route::post('login', [AuthController::class, 'authenticate'])->name('login.post')->defaults('role', 'desain');
     });
 
+    // Login Khusus Produksi
     Route::prefix('produksi')->name('produksi.')->group(function () {
         Route::get('login', [AuthController::class, 'index'])->name('login')->defaults('role', 'produksi');
         Route::post('login', [AuthController::class, 'authenticate'])->name('login.post')->defaults('role', 'produksi');
     });
 
+    // Login Khusus Manajemen
     Route::prefix('manajemen')->name('manajemen.')->group(function () {
         Route::get('login', [AuthController::class, 'index'])->name('login')->defaults('role', 'manajemen');
         Route::post('login', [AuthController::class, 'authenticate'])->name('login.post')->defaults('role', 'manajemen');
@@ -113,8 +116,7 @@ Route::middleware(['auth', \App\Http\Middleware\SessionTimeout::class])->group(f
     // Dashboard Umum (Fallback)
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // --- ADMIN AREA ---
-    // Tambahkan middleware role:admin jika sudah dibuat, jika belum biarkan auth saja tapi berisiko
+    // --- A. AREA ADMIN ---
     Route::prefix('admin')->name('admin.')->group(function () {
         // Ini akan memanggil view 'admin.dashboard' via Controller
         Route::get('dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
@@ -127,7 +129,7 @@ Route::middleware(['auth', \App\Http\Middleware\SessionTimeout::class])->group(f
         Route::get('notifications', [AdminController::class, 'notifications'])->name('notifications');
     });
 
-    // --- DESAIN AREA (Yang Sebelumnya Hilang) ---
+    // --- B. AREA DESAIN ---
     Route::prefix('desain')->name('desain.')->group(function () {
         Route::get('dashboard', [DesainController::class, 'dashboard'])->name('dashboard');
         Route::get('designs', [DesainController::class, 'designs'])->name('designs');
