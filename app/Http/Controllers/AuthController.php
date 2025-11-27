@@ -3,78 +3,60 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth; 
+// Tambahkan DB untuk pengecekan peran (role)
+use Illuminate\Support\Facades\DB; 
 
 class AuthController extends Controller
 {
-    // 1. Tampilkan Halaman Login (support role-aware login)
-    public function index(Request $request)
+    // 1. Tampilkan Halaman Login
+    public function showLogin()
     {
-        $roleSlug = $request->route('role');
-
-        $roleRecord = null;
-        if ($roleSlug) {
-            // cari role dengan case-insensitive match pada kolom nama_role
-            $roleRecord = DB::table('roles')
-                ->whereRaw('LOWER(nama_role) = ?', [strtolower($roleSlug)])
-                ->first();
-
-            if (! $roleRecord) {
-                abort(404);
-            }
-        }
-
-        // Nama route POST untuk login bergantung pada role (contoh: admin.login.post)
-        $loginPostRoute = $roleSlug ? ($roleSlug . '.login.post') : 'login.post';
-
-        return view('login', [
-            'role' => $roleSlug,
-            'roleRecord' => $roleRecord,
-            'loginPostRoute' => $loginPostRoute,
-        ]);
+        // Menampilkan view login.blade.php.
+        // Asumsi: File view berada di resources/views/login.blade.php.
+        return view('login'); 
     }
 
-    // 2. Proses Login
+    // 2. Proses Login dengan Pengalihan Berbasis Peran
     public function authenticate(Request $request)
     {
-        $roleSlug = $request->route('role');
-
-        $roleRecord = null;
-        if ($roleSlug) {
-            $roleRecord = DB::table('roles')
-                ->whereRaw('LOWER(nama_role) = ?', [strtolower($roleSlug)])
-                ->first();
-
-            if (! $roleRecord) {
-                abort(404);
-            }
-        }
-
         // Validasi input
         $credentials = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required'],
         ]);
 
-        // Coba login (Auth::attempt otomatis mengecek hash password)
+        // Coba login
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
+            
+            $user = Auth::user();
+            
+            // Mengambil nama role user dari database berdasarkan role_id
+            $userRole = DB::table('roles')->where('id', $user->role_id)->first();
+            
+            if ($userRole) {
+                $roleName = strtolower($userRole->nama_role);
 
-            // Jika login via role-specific page, pastikan akun punya role yang sesuai
-            if ($roleRecord && Auth::user()->role_id != $roleRecord->id) {
-                // logout dan kembalikan error
-                Auth::logout();
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
-
-                return back()->withErrors([
-                    'email' => 'Akun ini tidak memiliki akses ke area ' . $roleRecord->nama_role . '.',
-                ])->onlyInput('email');
+                // Logika Pengalihan (Redirect) Berbasis Peran
+                switch ($roleName) {
+                    case 'produksi':
+                        // Pastikan route 'produksi.dashboard' sudah didefinisikan di web.php
+                        return redirect()->intended(route('produksi.dashboard'));
+                    case 'desain':
+                        // Pastikan route 'desain.dashboard' sudah didefinisikan di web.php
+                        return redirect()->intended(route('desain.dashboard'));
+                    case 'manajemen':
+                        // Pastikan route 'manajemen.dashboard' sudah didefinisikan di web.php
+                        return redirect()->intended(route('manajemen.dashboard'));
+                    case 'admin':
+                        // Pastikan route 'admin.dashboard' sudah didefinisikan di web.php
+                        return redirect()->intended(route('admin.dashboard'));
+                }
             }
 
-            // Login sukses -> Arahkan ke Dashboard
-            return redirect()->intended('dashboard');
+            // Default fallback jika role tidak dikenali
+            return redirect()->intended(route('dashboard'));
         }
 
         // Login gagal -> Kembali dengan error
