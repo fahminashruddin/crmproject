@@ -15,30 +15,30 @@ use Illuminate\Support\Facades\DB;
 // ====================================================
 Route::middleware(['guest', \App\Http\Middleware\SessionTimeout::class])->group(function () {
     // Generic login
-    Route::get('/login', [AuthController::class, 'index'])->name('login');
+    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'authenticate'])->name('login.post');
 
     // Role-based login routes
     Route::prefix('admin')->name('admin.')->group(function () {
-        Route::get('login', [AuthController::class, 'index'])->name('login')->defaults('role', 'admin');
+        Route::get('login', [AuthController::class, 'showLogin'])->name('login')->defaults('role', 'admin');
         Route::post('login', [AuthController::class, 'authenticate'])->name('login.post')->defaults('role', 'admin');
     });
 
     // Login Khusus Desain
     Route::prefix('desain')->name('desain.')->group(function () {
-        Route::get('login', [AuthController::class, 'index'])->name('login')->defaults('role', 'desain');
+        Route::get('login', [AuthController::class, 'showLogin'])->name('login')->defaults('role', 'desain');
         Route::post('login', [AuthController::class, 'authenticate'])->name('login.post')->defaults('role', 'desain');
     });
 
     // Login Khusus Produksi
     Route::prefix('produksi')->name('produksi.')->group(function () {
-        Route::get('login', [AuthController::class, 'index'])->name('login')->defaults('role', 'produksi');
+        Route::get('login', [AuthController::class, 'showLogin'])->name('login')->defaults('role', 'produksi');
         Route::post('login', [AuthController::class, 'authenticate'])->name('login.post')->defaults('role', 'produksi');
     });
 
     // Login Khusus Manajemen
     Route::prefix('manajemen')->name('manajemen.')->group(function () {
-        Route::get('login', [AuthController::class, 'index'])->name('login')->defaults('role', 'manajemen');
+        Route::get('login', [AuthController::class, 'showLogin'])->name('login')->defaults('role', 'manajemen');
         Route::post('login', [AuthController::class, 'authenticate'])->name('login.post')->defaults('role', 'manajemen');
     });
 });
@@ -132,8 +132,9 @@ Route::middleware(['auth', \App\Http\Middleware\SessionTimeout::class])->group(f
     // --- B. AREA DESAIN ---
     Route::prefix('desain')->name('desain.')->group(function () {
         Route::get('dashboard', [DesainController::class, 'dashboard'])->name('dashboard');
-        Route::get('designs', [DesainController::class, 'designs'])->name('designs');
-        Route::get('revisions', [DesainController::class, 'revisions'])->name('revisions');
+        Route::get('designs', [DesainController::class, 'kelolaDesain'])->name('kelola');
+        Route::get('history', [DesainController::class, 'history'])->name('riwayat');
+        Route::get('revisions', [DesainController::class, 'revisions'])->name('pengaturan');
     });
 
     // --- PRODUKSI AREA (Yang Sebelumnya Hilang) ---

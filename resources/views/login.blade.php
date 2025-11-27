@@ -89,10 +89,11 @@
                             <li><strong>Desain:</strong> desain1@example.com / password</li>
                             <li><strong>Produksi:</strong> produksi1@example.com / password</li>
                             <li><strong>Manajemen:</strong> manajemen1@example.com / password</li>
-                            <li><strong>Admin:</strong> admin@percetakan.com / admin123</li>
+
+                            {{-- <li><strong>Admin:</strong> admin@percetakan.com / admin123</li>
                             <li><strong>Desain:</strong> design@percetakan.com / design123</li>
                             <li><strong>Produksi:</strong> production@percetakan.com / production123</li>
-                            <li><strong>Manajemen:</strong> manager@percetakan.com / manager123</li>
+                            <li><strong>Manajemen:</strong> manager@percetakan.com / manager123</li> --}}
                         </ul>
                     </div>
                 </div>

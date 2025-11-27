@@ -14,10 +14,10 @@ return new class extends Migration
         Schema::create('jenis_layanans', function (Blueprint $table) {
             $table->id();
             $table->string('nama_layanan');
-            
+            $table->string('deskripsi');
             // Tambahkan kolom ini agar seeder tidak error
-            $table->decimal('harga_satuan', 15, 2)->default(0); 
-            
+            $table->decimal('harga_dasar', 15, 2)->default(0);
+
             $table->timestamps();
         });
     }
