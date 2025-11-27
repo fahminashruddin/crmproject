@@ -72,7 +72,7 @@ class DesainController extends Controller
             ],
         ];
 
-        return view('desain.dashboard', compact('designs'));
+        return view('desain.dashboard', compact('antrian'));
     }
 
 
