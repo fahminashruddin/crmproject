@@ -60,9 +60,12 @@ class AuthController extends Controller
         // Coba login (Auth::attempt otomatis mengecek hash password)
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
+            
+            // Ambil user yang sedang login
+            $user = Auth::user();
 
             // Jika login via role-specific page, pastikan akun punya role yang sesuai
-            if ($roleRecord && Auth::user()->role_id != $roleRecord->id) {
+            if ($roleRecord && $user->role_id != $roleRecord->id) {
                 // logout dan kembalikan error
                 Auth::logout();
                 $request->session()->invalidate();
@@ -73,8 +76,28 @@ class AuthController extends Controller
                 ])->onlyInput('email');
             }
 
-            // Login sukses -> Arahkan ke Dashboard
-            return redirect()->intended('dashboard');
+            // === LOGIC REDIRECT BARU ===
+            // Ambil nama role user dari database berdasarkan role_id
+            $userRole = DB::table('roles')->where('id', $user->role_id)->first();
+            
+            if ($userRole) {
+                $roleName = strtolower($userRole->nama_role);
+
+                // Arahkan ke dashboard sesuai role
+                switch ($roleName) {
+                    case 'produksi':
+                        return redirect()->intended(route('produksi.dashboard'));
+                    case 'desain':
+                        return redirect()->intended(route('desain.dashboard'));
+                    case 'manajemen':
+                        return redirect()->intended(route('manajemen.dashboard'));
+                    case 'admin':
+                        return redirect()->intended(route('admin.dashboard'));
+                }
+            }
+
+            // Default fallback (jika role tidak dikenali atau user biasa)
+            return redirect()->intended(route('dashboard'));
         }
 
         // Login gagal -> Kembali dengan error

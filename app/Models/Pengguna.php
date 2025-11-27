@@ -29,4 +29,9 @@ class Pengguna extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+     public function role()
+    {
+        return $this->belongsTo(\App\Models\Role::class, 'role_id');
+    }
 }
