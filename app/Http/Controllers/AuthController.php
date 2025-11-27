@@ -30,32 +30,45 @@ class AuthController extends Controller
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
             
+            // Ambil user yang sedang login
             $user = Auth::user();
-            
-            // Mengambil nama role user dari database berdasarkan role_id
+
+            // Ambil user yang sedang login
+            $user = Auth::user();
+
+            // Jika login via role-specific page, pastikan akun punya role yang sesuai
+            if ($roleRecord && $user->role_id != $roleRecord->id) {
+                // logout dan kembalikan error
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                return back()->withErrors([
+                    'email' => 'Akun ini tidak memiliki akses ke area ' . $roleRecord->nama_role . '.',
+                ])->onlyInput('email');
+            }
+
+            // === LOGIC REDIRECT BARU ===
+            // Ambil nama role user dari database berdasarkan role_id
             $userRole = DB::table('roles')->where('id', $user->role_id)->first();
-            
+
             if ($userRole) {
                 $roleName = strtolower($userRole->nama_role);
 
-                // Logika Pengalihan (Redirect) Berbasis Peran
+                // Arahkan ke dashboard sesuai role
                 switch ($roleName) {
                     case 'produksi':
-                        // Pastikan route 'produksi.dashboard' sudah didefinisikan di web.php
                         return redirect()->intended(route('produksi.dashboard'));
                     case 'desain':
-                        // Pastikan route 'desain.dashboard' sudah didefinisikan di web.php
                         return redirect()->intended(route('desain.dashboard'));
                     case 'manajemen':
-                        // Pastikan route 'manajemen.dashboard' sudah didefinisikan di web.php
                         return redirect()->intended(route('manajemen.dashboard'));
                     case 'admin':
-                        // Pastikan route 'admin.dashboard' sudah didefinisikan di web.php
                         return redirect()->intended(route('admin.dashboard'));
                 }
             }
 
-            // Default fallback jika role tidak dikenali
+            // Default fallback (jika role tidak dikenali atau user biasa)
             return redirect()->intended(route('dashboard'));
         }
 
