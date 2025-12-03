@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('pembayarans', function (Blueprint $table) {
             $table->id(); // Pengganti id_pembayaran
-            $table->decimal('nominal', 10, 2);
+            $table->decimal('nominal', 15, 2);
             $table->string('bukti_bayar_path')->nullable();
             $table->date('tanggal_bayar');
             $table->string('status', 50)->default('pending');

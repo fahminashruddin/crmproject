@@ -120,30 +120,37 @@ class AdminController extends Controller
 
     private function getOrdersQuery()
     {
-        return DB::table('pesanans')
+        // Menggunakan base query builder
+        $baseQuery = DB::table('pesanans')
             ->leftJoin('pelanggans', 'pesanans.pelanggan_id', '=', 'pelanggans.id')
             ->leftJoin('status_pesanans', 'pesanans.status_pesanan_id', '=', 'status_pesanans.id')
-            ->select([
-                'pesanans.*',
-                'pelanggans.nama as pelanggan_nama',
-                'status_pesanans.nama_status',
-                // 1. SUBQUERY: Hitung Total Item (SUM jumlah di detail_pesanans)
-                'jumlah_pesanan' => DB::table('detail_pesanans')
-                    ->selectRaw('COALESCE(SUM(jumlah), 0)')
-                    ->whereColumn('pesanan_id', 'pesanans.id'),
+            ->select('pesanans.*', 'pelanggans.nama as pelanggan_nama', 'status_pesanans.nama_status');
 
-                // 2. SUBQUERY: Hitung Total Harga (SUM jumlah * harga_satuan)
-                'total_harga' => DB::table('detail_pesanans')
-                    ->selectRaw('COALESCE(SUM(jumlah * harga_satuan), 0)')
-                    ->whereColumn('pesanan_id', 'pesanans.id'),
+        // 1. SUBQUERY: Hitung Total Item (Jumlah)
+        $baseQuery->addSelect([
+            'jumlah_pesanan' => DB::table('detail_pesanans')
+                ->selectRaw('COALESCE(SUM(jumlah), 0)')
+                ->whereColumn('pesanan_id', 'pesanans.id')
+        ]);
 
-                // 3. SUBQUERY: Ambil Nama Layanan (Ambil 1 layanan pertama sebagai perwakilan)
-                'jenis_layanan' => DB::table('detail_pesanans')
-                    ->join('jenis_layanans', 'detail_pesanans.jenis_layanan_id', '=', 'jenis_layanans.id')
-                    ->select('jenis_layanans.nama_layanan') // Pastikan nama kolom di tabel jenis_layanans benar
-                    ->whereColumn('detail_pesanans.pesanan_id', 'pesanans.id')
-                    ->limit(1)
-            ]);
+        // 2. SUBQUERY: Hitung Total Harga
+        $baseQuery->addSelect([
+            'total_harga' => DB::table('detail_pesanans')
+                // Gunakan COALESCE untuk memastikan nilai 0 jika tidak ada detail
+                ->selectRaw('COALESCE(SUM(jumlah * harga_satuan), 0)')
+                ->whereColumn('pesanan_id', 'pesanans.id')
+        ]);
+
+        // 3. SUBQUERY: Ambil Nama Layanan (Ambil 1 layanan perwakilan)
+        $baseQuery->addSelect([
+            'jenis_layanan' => DB::table('detail_pesanans')
+                ->join('jenis_layanans', 'detail_pesanans.jenis_layanan_id', '=', 'jenis_layanans.id')
+                ->select('jenis_layanans.nama_layanan')
+                ->whereColumn('detail_pesanans.pesanan_id', 'pesanans.id')
+                ->limit(1) // Ambil yang pertama sebagai perwakilan
+        ]);
+
+        return $baseQuery;
     }
 
     // ---SIMPAN PESANAN ---
@@ -220,13 +227,91 @@ class AdminController extends Controller
     {
         $this->ensureAdmin();
 
-        $payments = DB::table('pembayarans')
+        // 1. QUERY DATA PEMBAYARAN (LENGKAP)
+        $paymentsData = DB::table('pembayarans')
             ->leftJoin('pesanans', 'pembayarans.pesanan_id', '=', 'pesanans.id')
-            ->select('pembayarans.*', 'pesanans.id as pesanan_id', 'pesanans.pelanggan_id')
+            ->leftJoin('pelanggans', 'pesanans.pelanggan_id', '=', 'pelanggans.id')
+            // TAMBAHAN: Join ke metode pembayaran untuk mengambil namanya
+            ->leftJoin('metode_pembayarans', 'pembayarans.metode_pembayaran_id', '=', 'metode_pembayarans.id')
+            ->select([
+                'pembayarans.*',
+                'pesanans.id as order_id',
+                'pelanggans.nama as customer_name',
+                'metode_pembayarans.nama_metode' // Ambil nama metode
+            ])
             ->orderBy('pembayarans.created_at', 'desc')
-            ->paginate(10); // Gunakan pagination juga disini
+            ->get();
 
-        return view('admin.payments', compact('payments'));
+        // 2. FILTER DATA UNTUK KARTU ATAS (STATS)
+        $pendingPayments = $paymentsData->where('status', 'pending');
+        $verifiedPayments = $paymentsData->where('status', 'verifikasi'); // Sesuaikan string di DB ('verifikasi' atau 'verified')
+
+        $totalRevenue = $verifiedPayments->sum('nominal');
+
+        // Data untuk dropdown di modal/form (tetap string array atau ambil dari DB)
+        $paymentMethods = DB::table('metode_pembayarans')->pluck('nama_metode');
+
+        // 3. KIRIM KE VIEW
+        // Kita kirim $paymentsData sebagai $allPayments untuk riwayat
+        return view('admin.payments', compact(
+            'pendingPayments',
+            'verifiedPayments',
+            'totalRevenue',
+            'paymentMethods',
+            'paymentsData' // <--- INI KUNCINYA (Semua Data)
+        ));
+    }
+    public function verifyPayment(Request $request, $id)
+    {
+        $this->ensureAdmin();
+
+        // 1. Ambil nama metode yang dipilih dari form
+        $namaMetode = $request->input('payment_method');
+
+        // 2. Cari ID metode tersebut di tabel 'metode_pembayarans'
+        $metode = DB::table('metode_pembayarans')
+            ->where('nama_metode', $namaMetode)
+            ->first();
+
+        // Validasi: Jika metode tidak ditemukan di database
+        if (!$metode) {
+            return redirect()->back()->withErrors(['error' => 'Metode pembayaran tidak valid.']);
+        }
+
+        // 3. Update tabel pembayarans dengan ID yang benar
+        DB::table('pembayarans')
+            ->where('id', $id)
+            ->update([
+                'status' => 'verifikasi', // Gunakan 'verifikasi' sesuai data seeder Anda
+                'metode_pembayaran_id' => $metode->id, // <--- INI PERBAIKAN UTAMANYA (Pakai ID, bukan String)
+                'updated_at' => now()
+            ]);
+
+        // Opsional: Jika pembayaran terverifikasi, update status pesanan juga
+        $pembayaran = DB::table('pembayarans')->where('id', $id)->first();
+        if ($pembayaran) {
+             // Cari ID status 'Dikonfirmasi' atau 'Proses'
+             $statusConfirmId = DB::table('status_pesanans')->whereRaw('LOWER(nama_status) like ?', ['%konfirmasi%'])->value('id');
+
+             if ($statusConfirmId) {
+                 DB::table('pesanans')
+                    ->where('id', $pembayaran->pesanan_id)
+                    ->update(['status_pesanan_id' => $statusConfirmId]);
+             }
+        }
+
+        return redirect()->route('admin.payments')->with('success', 'Pembayaran berhasil diverifikasi.');
+    }
+
+    public function rejectPayment($id)
+    {
+        $this->ensureAdmin();
+
+        DB::table('pembayarans')->where('id', $id)->update([
+            'status' => 'failed',
+        ]);
+
+        return redirect()->route('admin.payments')->with('error', 'Pembayaran ditolak.');
     }
 
     public function users()

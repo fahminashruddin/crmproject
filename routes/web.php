@@ -124,6 +124,8 @@ Route::middleware(['auth', \App\Http\Middleware\SessionTimeout::class])->group(f
         Route::post('orders', [AdminController::class, 'storeOrder'])->name('orders.store');
         Route::patch('orders/{id}/update-status', [AdminController::class, 'updateOrderStatus'])->name('orders.update');
         Route::get('payments', [AdminController::class, 'payments'])->name('payments');
+        Route::post('payments/{id}/verify', [AdminController::class, 'verifyPayment'])->name('payments.verify');
+        Route::get('payments/{id}/reject', [AdminController::class, 'rejectPayment'])->name('payments.reject');
         Route::get('users', [AdminController::class, 'users'])->name('users');
         Route::get('settings', [AdminController::class, 'settings'])->name('settings');
         Route::get('notifications', [AdminController::class, 'notifications'])->name('notifications');
