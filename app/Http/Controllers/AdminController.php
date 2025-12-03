@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class AdminController extends Controller
 {
@@ -17,6 +18,48 @@ class AdminController extends Controller
         if (! Auth::check() || Auth::user()->role_id != $roleId) {
             abort(403, 'Akses Ditolak: Halaman ini khusus Administrator.');
         }
+    }
+
+    // --- FITUR TAMBAH USER ---
+    public function storeUser(Request $request)
+    {
+        $this->ensureAdmin();
+
+        // 1. Validasi
+        $request->validate([
+            'name'     => 'required|string|max:255',
+            'username' => 'required|string|max:50|unique:penggunas,username', // Validasi Username
+            'email'    => 'required|email|unique:penggunas,email',
+            'password' => 'required|string|min:6',
+            'role_id'  => 'required|exists:roles,id',
+        ]);
+
+        // 2. Insert ke Database
+        DB::table('penggunas')->insert([
+            'name'       => $request->name,
+            'username'   => $request->username, // Simpan Username
+            'email'      => $request->email,
+            'password'   => Hash::make($request->password),
+            'role_id'    => $request->role_id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return redirect()->back()->with('success', 'User baru berhasil ditambahkan!');
+    }
+
+    // --- FITUR HAPUS USER ---
+    public function destroyUser($id)
+    {
+        $this->ensureAdmin();
+
+        if ($id == Auth::id()) {
+            return redirect()->back()->with('error', 'Anda tidak dapat menghapus akun sendiri!');
+        }
+
+        DB::table('penggunas')->where('id', $id)->delete();
+
+        return redirect()->back()->with('success', 'User berhasil dihapus.');
     }
 
     public function dashboard()
@@ -321,21 +364,50 @@ class AdminController extends Controller
         $users = DB::table('penggunas')
             ->leftJoin('roles', 'penggunas.role_id', '=', 'roles.id')
             ->select('penggunas.*', 'roles.nama_role')
-            ->orderBy('penggunas.name')
-            ->get(); // User biasanya tidak sebanyak pesanan, get() masih aman untuk skala kecil
+            ->orderBy('penggunas.id', 'asc')
+            ->get();
 
-        return view('admin.users', compact('users'));
+            // 2. Ambil data Role untuk Dropdown
+        $roles = DB::table('roles')->get();
+
+        return view('admin.users', compact('users', 'roles'));
     }
 
     public function settings()
     {
         $this->ensureAdmin();
+
+        // Jika nanti ada data pengaturan dari database, ambil di sini.
+        // Contoh: $settings = DB::table('settings')->first();
+
         return view('admin.settings');
     }
 
     public function notifications()
     {
         $this->ensureAdmin();
-        return view('admin.notifications');
+
+        // Data Dummy Notifikasi (Sesuai gambar)
+        // Nanti bisa diganti dengan database query: DB::table('notifications')->get();
+        $notifications = [
+            (object)[
+                'id' => 1,
+                'type' => 'order', // Tipe untuk menentukan icon/warna
+                'title' => 'Pesanan baru masuk',
+                'message' => 'ORD-003 dari CV. Sukses Mandiri',
+                'is_read' => false,
+                'created_at' => now()->subMinutes(5),
+            ],
+            (object)[
+                'id' => 2,
+                'type' => 'payment',
+                'title' => 'Pembayaran terverifikasi',
+                'message' => 'ORD-001 pembayaran Rp 750.000',
+                'is_read' => true,
+                'created_at' => now()->subHour(),
+            ],
+        ];
+
+        return view('admin.notifications', compact('notifications'));
     }
 }
