@@ -22,6 +22,10 @@ use Illuminate\Support\Facades\DB;
 // === 1. ROUTE UNTUK TAMU (BELUM LOGIN) ===
 Route::middleware(['guest'])->group(function () {
 
+    Route::get('/', function () {
+    return redirect()->route('login');
+});
+
     // Login Umum
     Route::get('/login', [AuthController::class, 'index'])->name('login');
     Route::post('/login', [AuthController::class, 'authenticate'])->name('login.post');
@@ -104,10 +108,13 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // --- B. AREA DESAIN ---
-    Route::prefix('desain')->name('desain.')->group(function () {
-        Route::get('dashboard', [DesainController::class, 'dashboard'])->name('dashboard');
-        Route::get('designs', [DesainController::class, 'designs'])->name('designs');
-        Route::get('revisions', [DesainController::class, 'revisions'])->name('revisions');
+    Route::prefix('desain')->middleware(['auth'])->group(function () {
+    Route::get('/dashboard', [DesainController::class, 'dashboard'])->name('desain.dashboard');
+    Route::get('/kelola', [DesainController::class, 'kelolaDesain'])->name('desain.kelola');
+    Route::get('/designs', [DesainController::class, 'designs'])->name('desain.designs');
+    Route::get('/revisions', [DesainController::class, 'revisions'])->name('desain.revisions');
+    Route::get('/riwayat', [DesainController::class, 'riwayat'])->name('desain.riwayat');
+    Route::get('/template', [DesainController::class, 'pengaturan'])->name('desain.template');
     });
 
     // --- C. AREA PRODUKSI (LENGKAP DENGAN FITUR BARU) ---

@@ -72,16 +72,16 @@
     Dashboard
 </a>
 
-<a href="{{ route('desain.kelola') }}"
+<a href="{{ route('desain.designs') }}"
     class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors
-    {{ request()->routeIs('desain.kelola') ? 'bg-slate-900 text-white' : 'text-slate-700 hover:bg-slate-100' }}">
+    {{ request()->routeIs('desain.designs') ? 'bg-slate-900 text-white' : 'text-slate-700 hover:bg-slate-100' }}">
     <i data-lucide="palette" class="h-4 w-4"></i>
     Kelola Desain
 </a>
 
-                        <a href="{{ route('desain.pengaturan') }}" 
+                        <a href="{{ route('desain.template') }}" 
                             class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors
-                            {{ request()->routeIs('desain.pengaturan') 
+                            {{ request()->routeIs('desain.template') 
                                 ? 'bg-slate-900 text-white' 
                                 : 'text-slate-700 hover:bg-slate-100' }}">
                             <i data-lucide="archive" class="h-4 w-4"></i>

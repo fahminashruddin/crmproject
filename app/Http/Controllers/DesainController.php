@@ -1,37 +1,41 @@
 <?php
 
 namespace App\Http\Controllers;
-use Illuminate\Support\Facades\DB;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
+use App\Models\Desains\JenisLayanan;
 class DesainController extends Controller
 {
-
+    /**
+     * Halaman utama daftar pesanan yang perlu didesain
+     */
     public function designs(Request $request)
     {
-        // Mendapatkan ID status 'desain' untuk filtering
+        // Cari ID status pesanan 'desain'
         $statusDesainId = DB::table('status_pesanans')
             ->whereRaw('LOWER(nama_status) = ?', ['desain'])
             ->value('id');
 
-        // Mengambil pesanan yang statusnya adalah 'desain'
+        // Ambil semua pesanan yang statusnya 'desain'
         $designs = DB::table('pesanans')
-            ->where('status_pesanan_id', $statusDesainId) // Filter hanya pesanan yang siap didesain
+            ->where('status_pesanan_id', $statusDesainId)
             ->leftJoin('pelanggans', 'pesanans.pelanggan_id', '=', 'pelanggans.id')
             ->leftJoin('status_pesanans', 'pesanans.status_pesanan_id', '=', 'status_pesanans.id')
-            ->select('pesanans.*', 'pelanggans.nama as pelanggan_nama', 'status_pesanans.nama_status')
-            ->orderBy('pesanans.tanggal_pesanan', 'asc') // Order tertua/paling awal didahulukan
-            ->paginate(10); // Gunakan pagination
+            ->select(
+                'pesanans.*',
+                'pelanggans.nama as pelanggan_nama',
+                'status_pesanans.nama_status'
+            )
+            ->orderBy('pesanans.tanggal_pesanan', 'asc')
+            ->paginate(10);
 
-        // Pastikan Anda telah membuat view desain/designs.blade.php
         return view('desain.designs', compact('designs'));
     }
 
-    // Pastikan juga metode revisi ada jika rute Anda memanggilnya
-
     /**
-     * Redirect ke halaman utama Kelola Desain
+     * Redirect default ke kelola desain
      */
     public function index()
     {
@@ -39,12 +43,11 @@ class DesainController extends Controller
     }
 
     /**
-     * Menampilkan Dashboard Desain.
-     * Data dummy disesuaikan agar properti 'status_desain' dan 'created_at' selalu tersedia.
+     * Dashboard Desainer
+     * (Menggunakan data dummy agar tidak error)
      */
     public function dashboard()
     {
-        // Data dummy untuk dashboard, ditambahkan properti status_desain dan created_at (untuk mengatasi error di Blade)
         $antrian = [
             (object)[
                 'id' => 1,
@@ -52,7 +55,7 @@ class DesainController extends Controller
                 'status' => 'Menunggu',
                 'status_desain' => 'Menunggu Desain',
                 'deadline' => '2025-12-01',
-                'created_at' => '2025-11-25 10:30:00' // FIX: Ditambahkan properti created_at
+                'created_at' => '2025-11-25 10:30:00'
             ],
             (object)[
                 'id' => 2,
@@ -60,7 +63,7 @@ class DesainController extends Controller
                 'status' => 'Proses',
                 'status_desain' => 'Perlu Revisi',
                 'deadline' => '2025-12-02',
-                'created_at' => '2025-11-26 14:00:00' // FIX: Ditambahkan properti created_at
+                'created_at' => '2025-11-26 14:00:00'
             ],
             (object)[
                 'id' => 3,
@@ -68,21 +71,19 @@ class DesainController extends Controller
                 'status' => 'Review',
                 'status_desain' => 'Menunggu Persetujuan',
                 'deadline' => '2025-12-05',
-                'created_at' => '2025-11-27 09:15:00' // FIX: Ditambahkan properti created_at
+                'created_at' => '2025-11-27 09:15:00'
             ],
         ];
 
         return view('desain.dashboard', compact('antrian'));
     }
 
-
     /**
-     * Menampilkan halaman Kelola Desain (Tabel Utama).
-     * Mengirimkan data dummy pesanan desain.
+     * Halaman utama kelola desain
+     * (Data dummy untuk tabel)
      */
     public function kelolaDesain()
     {
-        // Data Dummy Pesanan Desain yang akan digunakan oleh designs.blade.php
         $designs = [
             (object)[
                 'id_pesanan' => 'ORD-101',
@@ -130,18 +131,15 @@ class DesainController extends Controller
     }
 
     /**
-     * Menampilkan Daftar Pesanan Revisi.
-     * (Ditambahkan untuk menyediakan action bagi Route [desain.revisions])
+     * Halaman revisi desain
      */
     public function revisions()
     {
-        // Anda dapat menambahkan logika untuk mengambil data revisi di sini.
-        // Untuk saat ini, hanya mengembalikan view placeholder.
         return view('desain.revisions');
     }
 
     /**
-     * Menampilkan Riwayat Desain
+     * Halaman riwayat desain
      */
     public function riwayat()
     {
@@ -149,10 +147,23 @@ class DesainController extends Controller
     }
 
     /**
-     * Menampilkan Pengaturan Desain/Template
+     * Halaman pengaturan / template desain
      */
-    public function pengaturan()
+  public function pengaturan()
     {
-        return view('desain.template');
+        // --- PERBAIKAN: Menggunakan Model JenisLayanan yang sudah di-import ---
+        try {
+            // Mengambil semua data Jenis Layanan sebagai template
+            $templates = JenisLayanan::all(); 
+        } catch (\Exception $e) {
+            // Fallback jika Model/Tabel belum siap (untuk menghindari error crash)
+            $templates = collect([]); 
+        }
+
+        // Perhatian: Pastikan nama view yang dipanggil sesuai dengan yang ada di routes!
+        // Jika rute Anda mengarah ke desain.template, maka viewnya harus 'desain.template'
+        // Namun, jika Anda menggunakan view 'desain.desain' dari diskusi sebelumnya, ganti 'desain.template' menjadi 'desain.desain'.
+        return view('desain.template', compact('templates'));
     }
+
 }

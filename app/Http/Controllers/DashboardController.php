@@ -2,39 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
-    /**
-     * Tampilkan halaman dashboard (placeholder).
-     */
-    public function index()
+    public function index()https://github.com/fahminashruddin/crmproject/pull/7/conflict?name=routes%252Fweb.php&ancestor_oid=3f5402bc381d7ca088be8e8fa29128b36d330eaf&base_oid=ce6843252ddd944a07ac11b60079921489696561&head_oid=e86005b4d0c3a7736a05070639eca7b3a2cba431
     {
         $user = Auth::user();
 
-        // Ambil nama role user
-        $role = DB::table('roles')->where('id', $user->role_id)->value('nama_role');
-
-        // Normalisasi nama role (lowercase, trim)
-        $roleName = strtolower(trim($role));
-
-        // Redirect ke dashboard spesifik berdasarkan role
-        switch ($roleName) {
-            case 'admin':
-                return redirect()->route('admin.dashboard');
-            case 'produksi':
-                return redirect()->route('produksi.dashboard');
-            case 'desain':
-                return redirect()->route('desain.dashboard');
-            case 'manajemen':
-                return redirect()->route('manajemen.dashboard');
-            default:
-                // Fallback jika role tidak dikenali, logout atau tampilkan error
-                Auth::logout();
-                return redirect()->route('login')->withErrors(['email' => 'Role tidak dikenali.']);
-        }
+        return match ($user->role->nama_role) {
+            'admin'    => redirect()->route('admin.dashboard'),
+            'desain'   => redirect()->route('desain.dashboard'),
+            'produksi' => redirect()->route('produksi.dashboard'),
+            'manajemen'=> redirect()->route('manajemen.dashboard'),
+            default    => redirect()->route('login'),
+        };
     }
 }
