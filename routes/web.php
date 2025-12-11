@@ -9,6 +9,9 @@ use App\Http\Controllers\ProduksiController; // Pastikan import ini ada
 use App\Http\Controllers\ManajemenController; // Pastikan import ini ada
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\LaporanController;
+use App\Http\Controllers\AnalitikController;
+use App\Http\Controllers\ManajemenExportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -121,5 +124,40 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('manajemen')->name('manajemen.')->group(function () {
         Route::get('dashboard', [ManajemenController::class, 'dashboard'])->name('dashboard');
     });
+
+    
+    Route::middleware(['auth'])->group(function () {
+        Route::get('/manajemen/laporan', [LaporanController::class, 'index'])->name('manajemen.laporan.index');
+        
+    Route::get('/manajemen/laporan/export', [LaporanController::class, 'export'])
+            ->name('manajemen.laporan.export');
+        });
+    
+    Route::middleware(['auth'])->group(function () {
+    Route::get('/manajemen/analytics', [AnalitikController::class, 'index'])
+        ->name('manajemen.analytics');
+    });
+
+
+    // EXPORT DATA
+    Route::get('/manajemen/export', [ManajemenExportController::class, 'index'])
+        ->name('manajemen.export');
+
+    // Export Semua Pesanan
+    Route::get('/manajemen/export/pesanan', [ManajemenExportController::class, 'exportPesanan'])
+        ->name('manajemen.export.pesanan');
+
+    // Export Data Pelanggan
+    Route::get('/manajemen/export/pelanggan', [ManajemenExportController::class, 'exportPelanggan'])
+        ->name('manajemen.export.pelanggan');
+
+    // Export Laporan Keuangan
+    Route::get('/manajemen/export/keuangan', [ManajemenExportController::class, 'exportKeuangan'])
+        ->name('manajemen.export.keuangan');
+
+    // Export Laporan Produksi
+    Route::get('/manajemen/export/produksi', [ManajemenExportController::class, 'exportProduksi'])
+        ->name('manajemen.export.produksi');
+
 
 });
