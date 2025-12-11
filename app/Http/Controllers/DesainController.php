@@ -1,17 +1,41 @@
 <?php
 
 namespace App\Http\Controllers;
+use Illuminate\Support\Facades\DB;
 
 use Illuminate\Http\Request;
 
 class DesainController extends Controller
 {
+
+    public function designs(Request $request)
+    {
+        // Mendapatkan ID status 'desain' untuk filtering
+        $statusDesainId = DB::table('status_pesanans')
+            ->whereRaw('LOWER(nama_status) = ?', ['desain'])
+            ->value('id');
+
+        // Mengambil pesanan yang statusnya adalah 'desain'
+        $designs = DB::table('pesanans')
+            ->where('status_pesanan_id', $statusDesainId) // Filter hanya pesanan yang siap didesain
+            ->leftJoin('pelanggans', 'pesanans.pelanggan_id', '=', 'pelanggans.id')
+            ->leftJoin('status_pesanans', 'pesanans.status_pesanan_id', '=', 'status_pesanans.id')
+            ->select('pesanans.*', 'pelanggans.nama as pelanggan_nama', 'status_pesanans.nama_status')
+            ->orderBy('pesanans.tanggal_pesanan', 'asc') // Order tertua/paling awal didahulukan
+            ->paginate(10); // Gunakan pagination
+
+        // Pastikan Anda telah membuat view desain/designs.blade.php
+        return view('desain.designs', compact('designs'));
+    }
+
+    // Pastikan juga metode revisi ada jika rute Anda memanggilnya
+
     /**
      * Redirect ke halaman utama Kelola Desain
      */
     public function index()
     {
-        return $this->kelolaDesain(); 
+        return $this->kelolaDesain();
     }
 
     /**
@@ -26,7 +50,7 @@ class DesainController extends Controller
                 'id' => 1,
                 'nama_pelanggan' => 'Budi Santoso',
                 'status' => 'Menunggu',
-                'status_desain' => 'Menunggu Desain', 
+                'status_desain' => 'Menunggu Desain',
                 'deadline' => '2025-12-01',
                 'created_at' => '2025-11-25 10:30:00' // FIX: Ditambahkan properti created_at
             ],
@@ -34,7 +58,7 @@ class DesainController extends Controller
                 'id' => 2,
                 'nama_pelanggan' => 'Siti Aminah',
                 'status' => 'Proses',
-                'status_desain' => 'Perlu Revisi', 
+                'status_desain' => 'Perlu Revisi',
                 'deadline' => '2025-12-02',
                 'created_at' => '2025-11-26 14:00:00' // FIX: Ditambahkan properti created_at
             ],
@@ -42,7 +66,7 @@ class DesainController extends Controller
                 'id' => 3,
                 'nama_pelanggan' => 'Joko Pratama',
                 'status' => 'Review',
-                'status_desain' => 'Menunggu Persetujuan', 
+                'status_desain' => 'Menunggu Persetujuan',
                 'deadline' => '2025-12-05',
                 'created_at' => '2025-11-27 09:15:00' // FIX: Ditambahkan properti created_at
             ],
@@ -50,6 +74,7 @@ class DesainController extends Controller
 
         return view('desain.dashboard', compact('antrian'));
     }
+
 
     /**
      * Menampilkan halaman Kelola Desain (Tabel Utama).

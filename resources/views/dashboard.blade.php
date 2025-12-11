@@ -1,114 +1,55 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - CRM Percetakan</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-50 min-h-screen">
+@extends('layouts.admin')
 
-    @include('partials.navbar')
+@section('content')
+    <div class="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <h1 class="text-3xl font-bold text-slate-900">Dashboard Umum</h1>
+        <p class="text-slate-500 mt-1">Selamat datang kembali, {{ Auth::user()->name }}!</p>
+    </div>
 
-    <main class="ml-64 pt-20 px-8"> <!-- offset untuk sidebar + topbar -->
-        <div class="max-w-7xl mx-auto">
-            <div class="mb-6">
-                <h1 class="text-3xl font-extrabold">Dashboard Administrator</h1>
-                <p class="text-sm text-gray-500 mt-1">Kelola semua aspek operasional percetakan</p>
-            </div>
-
-            <!-- Cards -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-gray-500">Total Pesanan</p>
-                        <p class="mt-2 text-2xl font-semibold text-gray-900">{{ number_format($totalPesanan) }}</p>
-                        <p class="text-xs text-gray-400 mt-1">Semua pesanan</p>
-                    </div>
-                    <div class="text-gray-300">
-                        <!-- icon -->
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h18v18H3V3z"/></svg>
-                    </div>
-                </div>
-
-                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-gray-500">Pesanan Selesai</p>
-                        <p class="mt-2 text-2xl font-semibold text-gray-900">{{ number_format($pesananSelesai) }}</p>
-                        <p class="text-xs text-gray-400 mt-1">{{ $totalPesanan ? round(($pesananSelesai / max($totalPesanan,1)) * 100) . '% dari total' : '—' }}</p>
-                    </div>
-                    <div class="text-gray-300">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                    </div>
-                </div>
-
-                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-gray-500">Pembayaran Pending</p>
-                        <p class="mt-2 text-2xl font-semibold text-gray-900">{{ number_format($pembayaranPending) }}</p>
-                        <p class="text-xs text-gray-400 mt-1">Perlu verifikasi</p>
-                    </div>
-                    <div class="text-gray-300">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3"/></svg>
-                    </div>
-                </div>
-
-                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-gray-500">Total Pendapatan</p>
-                        <p class="mt-2 text-2xl font-semibold text-gray-900">Rp {{ number_format($totalPendapatan, 0, ',', '.') }}</p>
-                        <p class="text-xs text-gray-400 mt-1">Pembayaran terverifikasi</p>
-                    </div>
-                    <div class="text-gray-300">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 1.567-3 3.5S10.343 15 12 15s3-1.567 3-3.5S13.657 8 12 8z"/></svg>
-                    </div>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-                <div class="lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-                    <h3 class="text-lg font-medium text-gray-900">Pesanan Terbaru</h3>
-                    <div class="mt-4 space-y-4">
-                        @forelse($pesananTerbaru as $p)
-                            <div class="flex items-center justify-between border rounded-md p-4">
-                                <div>
-                                    <div class="text-sm font-semibold text-gray-900">{{ $p->pelanggan_nama ?? 'Pelanggan' }}</div>
-                                    <div class="text-xs text-gray-500">{{ $p->nama_status ?? '—' }}</div>
-                                </div>
-                                <div class="flex items-center gap-4">
-                                    <div class="text-sm text-gray-500">{{ date('d M Y', strtotime($p->tanggal_pesanan)) }}</div>
-                                    <div>
-                                        <span class="px-3 py-1 rounded-full text-xs bg-gray-900 text-white">{{ $p->nama_status ? \Illuminate\Support\Str::limit($p->nama_status, 20) : '—' }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        @empty
-                            <div class="text-sm text-gray-500">Tidak ada pesanan terbaru.</div>
-                        @endforelse
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-                    <h3 class="text-lg font-medium text-gray-900">Aktivitas User</h3>
-                    <div class="mt-4 space-y-3">
-                        @forelse($aktivitasUser as $u)
-                            <div class="flex items-center justify-between border rounded-md p-4">
-                                <div>
-                                    <div class="text-sm font-medium text-gray-900">{{ $u->name }}</div>
-                                    <div class="text-xs text-gray-500">{{ $u->email }}</div>
-                                </div>
-                                <div>
-                                    <span class="px-3 py-1 text-xs rounded-full bg-gray-100 text-gray-700">{{ $u->nama_role ?? '—' }}</span>
-                                </div>
-                            </div>
-                        @empty
-                            <div class="text-sm text-gray-500">Belum ada pengguna.</div>
-                        @endforelse
-                    </div>
-                </div>
-            </div>
+    <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 flex items-start gap-4 mb-8">
+        <div class="p-2 bg-blue-100 rounded-full text-blue-600 flex-shrink-0">
+            <i data-lucide="info" class="h-5 w-5"></i>
         </div>
-    </main>
+        <div>
+            <h3 class="font-bold text-blue-900 text-lg">Informasi Akun</h3>
+            <p class="text-blue-700 mt-1 text-sm leading-relaxed">
+                Anda saat ini berada di <strong>Dashboard Umum</strong>.
+                Role Anda terdeteksi sebagai:
+                <span class="font-bold uppercase">{{ Auth::user()->role->nama_role ?? 'Member' }}</span>.
+            </p>
+            @if(strtolower(Auth::user()->role->nama_role ?? '') == 'admin')
+                <div class="mt-4">
+                    <a href="{{ route('admin.dashboard') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm">
+                        Ke Dashboard Admin <i data-lucide="arrow-right" class="ml-2 h-4 w-4"></i>
+                    </a>
+                </div>
+            @endif
+        </div>
+    </div>
 
-</body>
-</html>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
+            <div class="flex justify-between items-start mb-4">
+                <span class="text-sm font-medium text-slate-500">Status Akun</span>
+                <div class="p-2 bg-green-50 rounded-lg">
+                    <i data-lucide="check-circle" class="h-4 w-4 text-green-600"></i>
+                </div>
+            </div>
+            <div class="text-xl font-bold text-slate-900">Aktif</div>
+            <div class="text-xs text-slate-500">{{ Auth::user()->email }}</div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
+            <div class="flex justify-between items-start mb-4">
+                <span class="text-sm font-medium text-slate-500">Bergabung Sejak</span>
+                <div class="p-2 bg-purple-50 rounded-lg">
+                    <i data-lucide="calendar" class="h-4 w-4 text-purple-600"></i>
+                </div>
+            </div>
+            <div class="text-xl font-bold text-slate-900">
+                {{ \Carbon\Carbon::parse(Auth::user()->created_at)->format('d M Y') }}
+            </div>
+            <div class="text-xs text-slate-500">Member Setia</div>
+        </div>
+    </div>
+@endsection

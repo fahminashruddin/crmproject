@@ -7,25 +7,19 @@ use Illuminate\Support\Facades\DB;
 
 class DetailPesananSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // 1. Ambil semua ID Pesanan
+        // 1. Ambil ID Pesanan & Layanan...
         $pesanans = DB::table('pesanans')->pluck('id');
+        $layanans = DB::table('jenis_layanans')->select('id', 'nama_layanan', 'harga_satuan')->get();
 
-        // 2. Ambil data Layanan beserta harganya
-        // Kita butuh 'harga_dasar' untuk mengisi 'harga_satuan'
-        $layanans = DB::table('jenis_layanans')->select('id', 'nama_layanan', 'harga_dasar')->get();
-
-        // Safety check
+        // Safety check (tetap diperlukan)...
         if ($pesanans->isEmpty() || $layanans->isEmpty()) {
-            $this->command->warn('Data Pesanan atau Jenis Layanan kosong. Harap seed tabel tersebut dulu.');
-            return;
+             $this->command->warn('Data Pesanan atau Jenis Layanan kosong. Harap seed tabel tersebut dulu.');
+             return;
         }
 
-        // 3. Daftar Spesifikasi Dummy (Agar data terlihat nyata)
+        // 2. DAFTAR SPESIFIKASI DUMMY (DIPINDAHKAN KE DALAM RUN())
         $specs = [
             'Bahan Art Paper 260gsm, Laminasi Doff, Potong Kotak',
             'Bahan Flexi 280gr, Finishing Mata Ayam 4 Sisi',
@@ -37,33 +31,31 @@ class DetailPesananSeeder extends Seeder
             'Mug Keramik Standar SNI, Coating Import, Dus Putih'
         ];
 
-        // 4. Loop setiap pesanan untuk dibuatkan detailnya
+        // 3. Loop setiap pesanan...
         foreach ($pesanans as $pesananId) {
-
-            // Tentukan: 1 pesanan bisa punya 1 atau 2 jenis item
             $jumlahItem = rand(1, 2);
 
             for ($i = 0; $i < $jumlahItem; $i++) {
-                // Pilih layanan secara acak
+
+                // Pastikan $layanans TIDAK kosong sebelum $layanan->id dipanggil.
+                if ($layanans->isEmpty()) continue;
+
                 $layanan = $layanans->random();
 
-                // Tentukan jumlah order (misal 10 - 500 pcs)
-                $qty = rand(1, 50) * 10;
-
-                // Tentukan harga satuan (Ambil dari harga dasar layanan + sedikit variasi margin)
-                // Jika harga_dasar null/0, kita kasih default 10.000
-                $basePrice = $layanan->harga_dasar > 0 ? $layanan->harga_dasar : 10000;
-
-                // Simulasi: Kadang ada biaya tambahan 5% - 20% untuk finishing sulit
+                // ... (Logika perhitungan harga tetap sama) ...
+                $basePrice = $layanan->harga_satuan > 0 ? $layanan->harga_satuan : 10000;
                 $markup = rand(0, 20) / 100;
                 $hargaFinal = $basePrice + ($basePrice * $markup);
+                $qty = rand(1, 10) * 10;
+                if ($basePrice >= 500000) { $qty = rand(1, 5); }
 
+                // 4. Insert ke database (Baris 50)
                 DB::table('detail_pesanans')->insert([
                     'pesanan_id'       => $pesananId,
                     'jenis_layanan_id' => $layanan->id,
-                    'spesifikasi'      => $specs[array_rand($specs)], // Pilih spek acak
+                    'spesifikasi'      => $specs[array_rand($specs)], // <-- Sekarang ini aman
                     'jumlah'           => $qty,
-                    'harga_satuan'     => $hargaFinal, // Harga decimal (10, 2)
+                    'harga_satuan'     => round($hargaFinal, 2),
                     'created_at'       => now(),
                     'updated_at'       => now(),
                 ]);
