@@ -6,6 +6,9 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AdminController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\LaporanController;
+use App\Http\Controllers\AnalitikController;
+use App\Http\Controllers\ManajemenExportController;
 
 // Route untuk Tamu (Belum Login)
 Route::middleware([ 'guest', \App\Http\Middleware\SessionTimeout::class ])->group(function () {
@@ -95,7 +98,7 @@ Route::get('/manajemen', function () {
 
     if (Auth::check()) {
         if (Auth::user()->role_id == $role->id) {
-            return redirect('/dashboard');
+            return redirect('../dashboard');
         }
         abort(403);
     }
@@ -138,6 +141,41 @@ Route::middleware([ 'auth', \App\Http\Middleware\SessionTimeout::class ])->group
     Route::prefix('manajemen')->name('manajemen.')->group(function () {
         Route::get('dashboard', [\App\Http\Controllers\ManajemenController::class, 'dashboard'])->name('dashboard');
         Route::get('reports', [\App\Http\Controllers\ManajemenController::class, 'reports'])->name('reports');
-        Route::get('analytics', [\App\Http\Controllers\ManajemenController::class, 'analytics'])->name('analytics');
     });
+
+    
+    Route::middleware(['auth'])->group(function () {
+        Route::get('/manajemen/laporan', [LaporanController::class, 'index'])->name('manajemen.laporan.index');
+        
+    Route::get('/manajemen/laporan/export', [LaporanController::class, 'export'])
+            ->name('manajemen.laporan.export');
+        });
+    
+    Route::middleware(['auth'])->group(function () {
+    Route::get('/manajemen/analytics', [AnalitikController::class, 'index'])
+        ->name('manajemen.analytics');
+    });
+
+
+    // EXPORT DATA
+    Route::get('/manajemen/export', [ManajemenExportController::class, 'index'])
+        ->name('manajemen.export');
+
+    // Export Semua Pesanan
+    Route::get('/manajemen/export/pesanan', [ManajemenExportController::class, 'exportPesanan'])
+        ->name('manajemen.export.pesanan');
+
+    // Export Data Pelanggan
+    Route::get('/manajemen/export/pelanggan', [ManajemenExportController::class, 'exportPelanggan'])
+        ->name('manajemen.export.pelanggan');
+
+    // Export Laporan Keuangan
+    Route::get('/manajemen/export/keuangan', [ManajemenExportController::class, 'exportKeuangan'])
+        ->name('manajemen.export.keuangan');
+
+    // Export Laporan Produksi
+    Route::get('/manajemen/export/produksi', [ManajemenExportController::class, 'exportProduksi'])
+        ->name('manajemen.export.produksi');
+
+
 });
