@@ -13,7 +13,7 @@ class ProduksiController extends Controller
     {
         // Asumsi role 'produksi' ada di tabel roles
         $roleId = DB::table('roles')->whereRaw('LOWER(nama_role) = ?', ['produksi'])->value('id');
-        
+
         // Bypass check jika role tidak ditemukan (untuk dev) atau sesuaikan logic auth Anda
         if (Auth::check() && $roleId && Auth::user()->role_id != $roleId) {
              abort(403, 'Unauthorized. Hanya tim Produksi yang boleh masuk sini.');
@@ -33,7 +33,7 @@ class ProduksiController extends Controller
             ->pluck('total', 'nama_status')
             ->toArray();
 
-        $menunggu = ($stats['Menunggu'] ?? 0) + ($stats['Desain Disetujui'] ?? 0); 
+        $menunggu = ($stats['Menunggu'] ?? 0) + ($stats['Desain Disetujui'] ?? 0);
         $sedangProses = $stats['Produksi'] ?? 0;
         $selesai = $stats['Selesai'] ?? 0;
 
@@ -76,7 +76,7 @@ class ProduksiController extends Controller
             ->pluck('total', 'nama_status')
             ->toArray();
 
-        $menunggu = ($stats['Menunggu'] ?? 0) + ($stats['Desain Disetujui'] ?? 0); 
+        $menunggu = ($stats['Menunggu'] ?? 0) + ($stats['Desain Disetujui'] ?? 0);
         $sedangProses = $stats['Produksi'] ?? 0;
         $selesai = $stats['Selesai'] ?? 0;
 
@@ -90,7 +90,7 @@ class ProduksiController extends Controller
                 'pesanans.tanggal_pesanan',
                 'pesanans.catatan',
                 'pelanggans.nama as nama_pelanggan',
-                'pelanggans.no_hp',
+                'pelanggans.telepon',
                 'status_pesanans.nama_status as status_produksi',
                 'desains.file_desain_path'
             )
@@ -138,7 +138,7 @@ class ProduksiController extends Controller
         $item->jumlah = $detail ? $detail->jumlah : 0;
         $item->layanan = $detail ? $detail->nama_layanan : '-';
         $item->spesifikasi = $detail ? $detail->spesifikasi : '-';
-        
+
         // Bersihkan nama file agar terlihat rapi
         $item->nama_file_desain = $item->file_desain_path ? basename($item->file_desain_path) : 'Belum ada file';
     }
@@ -185,7 +185,7 @@ class ProduksiController extends Controller
     public function issues()
     {
         $this->ensureProduksi();
-        
+
         // Ambil data kendala
         $issues = DB::table('kendala_produksis')
             ->join('pesanans', 'kendala_produksis.pesanan_id', '=', 'pesanans.id')
@@ -217,7 +217,7 @@ class ProduksiController extends Controller
             'waktu_terjadi' => now(), // Pastikan kolom ini ada di DB atau sesuaikan
             'produksi_id' => 1, // PERHATIAN: Sesuaikan logika ini. Biasanya perlu cari ID produksi aktif dari pesanan tsb.
             // Jika tabel kendala butuh user penanggung jawab dan kolomnya ada:
-            // 'user_id' => Auth::id(), 
+            // 'user_id' => Auth::id(),
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -240,8 +240,8 @@ class ProduksiController extends Controller
                 'pesanans.tanggal_pesanan',
                 'pesanans.catatan',
                 'pelanggans.nama as nama_pelanggan',
-                'pelanggans.no_hp',
-                'pelanggans.alamat', 
+                'pelanggans.telepon',
+                'pelanggans.alamat',
                 'status_pesanans.nama_status as status_produksi',
                 'desains.file_desain_path'
             )

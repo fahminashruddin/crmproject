@@ -8,7 +8,13 @@ use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
-    // 1. Tampilkan Halaman Login
+
+    public function index()
+    {
+        // PERBAIKAN: Mengarah ke resources/views/login.blade.php
+        return view('login');
+    }
+    // Tampilkan Halaman Login
     public function showLogin(Request $request)
     {
         // Mendapatkan parameter role dari route
@@ -18,7 +24,7 @@ class AuthController extends Controller
         return view('login', ['role' => $roleSlug]);
     }
 
-    // 2. Proses Login dengan Pengalihan Berbasis Peran
+    // Proses Login dengan Pengalihan Berbasis Peran
     public function authenticate(Request $request)
     {
         // --- PERBAIKAN 1: TAMBAHKAN LOGIKA ROLE RECORD ---
@@ -88,7 +94,7 @@ class AuthController extends Controller
         ])->onlyInput('email');
     }
 
-    // 3. Proses Logout
+    // Proses Logout
     public function logout(Request $request)
     {
         Auth::logout();

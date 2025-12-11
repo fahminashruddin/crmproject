@@ -21,7 +21,7 @@ use App\Http\Controllers\ManajemenExportController;
 
 // === 1. ROUTE UNTUK TAMU (BELUM LOGIN) ===
 Route::middleware(['guest'])->group(function () {
-    
+
     // Login Umum
     Route::get('/login', [AuthController::class, 'index'])->name('login');
     Route::post('/login', [AuthController::class, 'authenticate'])->name('login.post');
@@ -55,7 +55,7 @@ Route::middleware(['guest'])->group(function () {
 // Fungsi ini diletakkan di luar grup route agar bisa dipanggil
 if (!function_exists('checkRoleRedirect')) {
     function checkRoleRedirect($roleName) {
-        $role = DB::table('roles')->whereRaw('LOWER(nama_role) = ?', [$roleName])->first();
+        $role = DB::table('roles')->whereRaw('LOWER(nama_role) = ?', bindings: [$roleName])->first();
         if (!$role) abort(404);
 
         if (Auth::check()) {
@@ -85,7 +85,7 @@ Route::get('/manajemen', function () {
 
 // === 4. ROUTE UNTUK MEMBER (SUDAH LOGIN) ===
 Route::middleware(['auth'])->group(function () {
-    
+
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -93,8 +93,16 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
         Route::get('orders', [AdminController::class, 'orders'])->name('orders');
+        Route::get('orders', [AdminController::class, 'orders'])->name('orders');
+        Route::post('orders', [AdminController::class, 'storeOrder'])->name('orders.store');
+        Route::patch('orders/{id}/update', [AdminController::class, 'updateOrder'])->name('orders.update');
         Route::get('payments', [AdminController::class, 'payments'])->name('payments');
+        Route::post('payments/{id}/verify', [AdminController::class, 'verifyPayment'])->name('payments.verify');
+        Route::post('payments/{id}/reject', [AdminController::class, 'rejectPayment'])->name('payments.reject');
         Route::get('users', [AdminController::class, 'users'])->name('users');
+        Route::post('users', [AdminController::class, 'storeUser'])->name('users.store');
+        Route::delete('users/{id}', [AdminController::class, 'destroyUser'])->name('users.destroy');
+        Route::patch('users/{id}/toggle', [AdminController::class, 'toggleUserStatus'])->name('users.toggle');
         Route::get('settings', [AdminController::class, 'settings'])->name('settings');
         Route::get('notifications', [AdminController::class, 'notifications'])->name('notifications');
     });
@@ -110,14 +118,16 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('produksi')->name('produksi.')->group(function () {
         Route::get('dashboard', [ProduksiController::class, 'dashboard'])->name('dashboard');
         Route::get('productions', [ProduksiController::class, 'productions'])->name('productions');
-        
+
         // Aksi Tombol (POST)
         Route::post('productions/{id}/start', [ProduksiController::class, 'startProduction'])->name('productions.start');
         Route::post('productions/{id}/complete', [ProduksiController::class, 'completeProduction'])->name('productions.complete');
-        
+
         // Halaman Kendala
         Route::get('issues', [ProduksiController::class, 'issues'])->name('issues');
         Route::post('issues/store', [ProduksiController::class, 'storeIssue'])->name('issues.store');
+
+        Route::get('print/{id}', [ProduksiController::class, 'printJobSheet'])->name('print');
     });
 
     // --- D. AREA MANAJEMEN ---
@@ -125,14 +135,14 @@ Route::middleware(['auth'])->group(function () {
         Route::get('dashboard', [ManajemenController::class, 'dashboard'])->name('dashboard');
     });
 
-    
+
     Route::middleware(['auth'])->group(function () {
         Route::get('/manajemen/laporan', [LaporanController::class, 'index'])->name('manajemen.laporan.index');
-        
+
     Route::get('/manajemen/laporan/export', [LaporanController::class, 'export'])
             ->name('manajemen.laporan.export');
         });
-    
+
     Route::middleware(['auth'])->group(function () {
     Route::get('/manajemen/analytics', [AnalitikController::class, 'index'])
         ->name('manajemen.analytics');
