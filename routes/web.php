@@ -4,9 +4,15 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AdminController;
+<<<<<<< Updated upstream
 use App\Http\Controllers\DesainController; // Pastikan import ini ada
 use App\Http\Controllers\ProduksiController; // Pastikan import ini ada
 use App\Http\Controllers\ManajemenController; // Pastikan import ini ada
+=======
+use App\Http\Controllers\DesainController;
+use App\Http\Controllers\ProduksiController; // Pastikan ini ada
+use App\Http\Controllers\ManajemenController;
+>>>>>>> Stashed changes
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\LaporanController;
@@ -52,7 +58,6 @@ Route::middleware(['guest'])->group(function () {
 });
 
 // === 2. HELPER FUNCTION UNTUK REDIRECT ===
-// Fungsi ini diletakkan di luar grup route agar bisa dipanggil
 if (!function_exists('checkRoleRedirect')) {
     function checkRoleRedirect($roleName) {
         $role = DB::table('roles')->whereRaw('LOWER(nama_role) = ?', bindings: [$roleName])->first();
@@ -114,8 +119,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('revisions', [DesainController::class, 'revisions'])->name('revisions');
     });
 
-    // --- C. AREA PRODUKSI ---
+    // --- C. AREA PRODUKSI (YANG DIPERBAIKI) ---
     Route::prefix('produksi')->name('produksi.')->group(function () {
+<<<<<<< Updated upstream
         Route::get('dashboard', [ProduksiController::class, 'dashboard'])->name('dashboard');
         Route::get('productions', [ProduksiController::class, 'productions'])->name('productions');
 
@@ -128,6 +134,26 @@ Route::middleware(['auth'])->group(function () {
         Route::post('issues/store', [ProduksiController::class, 'storeIssue'])->name('issues.store');
 
         Route::get('print/{id}', [ProduksiController::class, 'printJobSheet'])->name('print');
+=======
+        // 1. Dashboard
+        Route::get('dashboard', [ProduksiController::class, 'dashboard'])->name('dashboard');
+        
+        // 2. List Produksi
+        Route::get('productions', [ProduksiController::class, 'productions'])->name('productions');
+        
+        // 3. Aksi Tombol (Start & Complete)
+        // URL menjadi: /produksi/start/{id}
+        Route::post('start/{id}', [ProduksiController::class, 'startProduction'])->name('productions.start');
+        // URL menjadi: /produksi/complete/{id}
+        Route::post('complete/{id}', [ProduksiController::class, 'completeProduction'])->name('productions.complete');
+        
+        // 4. Halaman & Aksi Kendala
+        Route::get('issues', [ProduksiController::class, 'issues'])->name('issues');
+        Route::post('issues', [ProduksiController::class, 'storeIssue'])->name('issues.store'); // <-- INI YANG KURANG TADI
+        
+        // 5. Print Job Sheet
+        Route::get('print/{id}', [ProduksiController::class, 'printJobSheet'])->name('print'); // <-- INI JUGA DITAMBAHKAN
+>>>>>>> Stashed changes
     });
 
     // --- D. AREA MANAJEMEN ---
