@@ -12,15 +12,19 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('detail_pesanans', function (Blueprint $table) {
-            $table->id(); // Pengganti id_detail_pesanan
-            $table->text('spesifikasi');
-            $table->integer('jumlah')->default(1);
-            $table->decimal('harga_satuan', 10, 2); // 10 digit total, 2 di belakang koma
-
-            // --- FOREIGN KEYS ---
+            $table->id();
+            
+            // Foreign Keys
             $table->foreignId('pesanan_id')->constrained('pesanans')->onDelete('cascade');
             $table->foreignId('jenis_layanan_id')->constrained('jenis_layanans');
-
+            
+            // Data Transaksi
+            $table->integer('jumlah');
+            
+            // Tambahkan 2 kolom ini agar tidak error lagi:
+            $table->decimal('harga_satuan', 15, 2)->default(0);
+            $table->decimal('subtotal', 15, 2)->default(0);
+            
             $table->timestamps();
         });
     }
