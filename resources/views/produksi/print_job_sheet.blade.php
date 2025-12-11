@@ -1,73 +1,116 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="utf-8">
-    <title>SPK - ORD-{{ str_pad($item->id, 3, '0', STR_PAD_LEFT) }}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Sheet</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @media print {
-            @page { margin: 0; size: A4; }
-            body { margin: 1.5cm; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .no-print { display: none !important; }
-            header, footer, nav, aside { display: none !important; }
+            body { 
+                -webkit-print-color-adjust: exact; 
+                print-color-adjust: exact; /* Ini perbaikannya */
+            }
+            .no-print { display: none; }
         }
-        body { font-family: sans-serif; }
+        body { font-family: 'Courier New', Courier, monospace; }
     </style>
 </head>
-<body class="bg-white text-slate-900 text-sm" onload="window.print()">
+<body class="bg-gray-100 p-8">
+    {{-- Isinya sama seperti sebelumnya, tidak perlu diubah jika sudah jalan --}}
+    {{-- ... content print ... --}}
+    <div class="max-w-2xl mx-auto bg-white p-8 border border-gray-300 shadow-sm print:shadow-none print:border-none">
+        
+        <div class="text-center border-b-2 border-black pb-4 mb-6">
+            <h1 class="text-3xl font-bold uppercase tracking-widest">JOB SHEET PRODUKSI</h1>
+            <p class="text-sm text-gray-600 mt-1">Surat Perintah Kerja (SPK)</p>
+        </div>
 
-    {{-- KOP --}}
-    <div class="border-b-2 border-slate-900 pb-4 mb-6 flex justify-between items-center">
-        <div class="flex items-center gap-4">
-            <div class="w-12 h-12 bg-slate-900 text-white flex items-center justify-center rounded">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><line x1="17" x2="17" y1="13" y2="23"/><line x1="12" x2="12" y1="13" y2="23"/><line x1="7" x2="7" y1="13" y2="23"/></svg>
+        <div class="grid grid-cols-2 gap-8 mb-6">
+            <div>
+                <p class="text-xs font-bold text-gray-500 uppercase">No. Pesanan</p>
+                <p class="text-xl font-bold text-black">ORD-{{ str_pad($item->id, 3, '0', STR_PAD_LEFT) }}</p>
+            </div>
+            <div class="text-right">
+                <p class="text-xs font-bold text-gray-500 uppercase">Tanggal Masuk</p>
+                <p class="text-lg font-bold text-black">{{ \Carbon\Carbon::parse($item->tanggal_pesanan)->format('d/m/Y') }}</p>
+            </div>
+        </div>
+
+        <div class="mb-6 border border-gray-300 p-4">
+            <h3 class="font-bold border-b border-gray-300 pb-2 mb-2 uppercase text-sm">Data Pelanggan</h3>
+            <div class="grid grid-cols-1 gap-1 text-sm">
+                <div class="flex">
+                    <span class="w-24 text-gray-500">Nama</span>
+                    <span class="font-bold">: {{ $item->nama_pelanggan }}</span>
+                </div>
+                <div class="flex">
+                    <span class="w-24 text-gray-500">No. HP</span>
+                    <span>: {{ $item->telepon ?? '-' }}</span>
+                </div>
+                <div class="flex">
+                    <span class="w-24 text-gray-500">Alamat</span>
+                    <span>: {{ $item->alamat ?? '-' }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-6">
+            <h3 class="font-bold border-b-2 border-black pb-2 mb-4 uppercase text-sm">Spesifikasi Order</h3>
+            
+            <table class="w-full text-left text-sm">
+                <tr class="border-b border-gray-200">
+                    <td class="py-2 w-1/3 font-bold text-gray-600">Jenis Layanan</td>
+                    <td class="py-2 font-bold text-xl">{{ $item->layanan }}</td>
+                </tr>
+                <tr class="border-b border-gray-200">
+                    <td class="py-2 font-bold text-gray-600">Jumlah Cetak</td>
+                    <td class="py-2 font-bold text-xl">{{ $item->jumlah }} Pcs</td>
+                </tr>
+                <tr class="border-b border-gray-200">
+                    <td class="py-2 font-bold text-gray-600 align-top">Spesifikasi</td>
+                    <td class="py-2">{{ $item->spesifikasi }}</td>
+                </tr>
+                <tr class="border-b border-gray-200">
+                    <td class="py-2 font-bold text-gray-600">File Desain</td>
+                    <td class="py-2 font-mono text-sm">{{ $item->file_desain }}</td>
+                </tr>
+                <tr>
+                    <td class="py-2 font-bold text-gray-600 align-top">Catatan</td>
+                    <td class="py-2 italic bg-gray-50 p-2 border border-dashed border-gray-300">
+                        {{ $item->catatan ?? 'Tidak ada catatan tambahan.' }}
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="grid grid-cols-2 gap-8 mt-12 text-center text-sm">
+            <div>
+                <p class="mb-16">Admin / Penerima</p>
+                <div class="border-t border-black mx-10"></div>
             </div>
             <div>
-                <h1 class="text-2xl font-bold uppercase">Job Sheet Produksi</h1>
-                <p class="text-slate-500 text-xs">Surat Perintah Kerja (SPK)</p>
+                <p class="mb-16">Operator Produksi</p>
+                <div class="border-t border-black mx-10"></div>
             </div>
         </div>
-        <div class="text-right">
-            <p class="text-xl font-mono font-bold border px-2 py-1 bg-slate-100">ORD-{{ str_pad($item->id, 3, '0', STR_PAD_LEFT) }}</p>
+
+        <div class="mt-8 pt-4 border-t border-gray-200 text-center text-xs text-gray-400">
+            Dicetak pada: {{ now()->format('d-m-Y H:i') }}
         </div>
     </div>
 
-    {{-- ISI --}}
-    <div class="grid grid-cols-2 gap-8 mb-6">
-        <div class="border p-4 rounded bg-slate-50">
-            <h3 class="font-bold border-b pb-2 mb-2 text-xs uppercase">Pelanggan</h3>
-            <table class="w-full">
-                <tr><td class="w-20 text-slate-500">Nama</td><td class="font-bold">: {{ $item->nama_pelanggan }}</td></tr>
-                <tr><td class="text-slate-500">Kontak</td><td>: {{ $item->no_hp ?? '-' }}</td></tr>
-                <tr><td class="text-slate-500">Alamat</td><td>: {{ $item->alamat ?? '-' }}</td></tr>
-            </table>
-        </div>
-        <div class="border p-4 rounded bg-slate-50">
-            <h3 class="font-bold border-b pb-2 mb-2 text-xs uppercase">Pekerjaan</h3>
-            <table class="w-full">
-                <tr><td class="w-20 text-slate-500">Layanan</td><td class="font-bold text-lg">: {{ $item->jenis_layanan }}</td></tr>
-                <tr><td class="text-slate-500">Jumlah</td><td class="font-bold text-lg">: {{ $item->jumlah }} Pcs</td></tr>
-                <tr><td class="text-slate-500">Status</td><td>: {{ $item->status_produksi }}</td></tr>
-            </table>
-        </div>
+    <div class="fixed bottom-8 right-8 no-print">
+        <button onclick="window.print()" class="bg-black text-white px-6 py-3 rounded-full font-bold shadow-lg hover:bg-gray-800 flex items-center gap-2 transition transform hover:scale-105">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            CETAK SEKARANG
+        </button>
     </div>
 
-    <div class="mb-10">
-        <h3 class="font-bold text-xs uppercase mb-1">Catatan Produksi</h3>
-        <div class="border border-dashed border-slate-400 p-4 rounded min-h-[100px]">
-            {{ $item->catatan ?? 'Tidak ada catatan.' }}
-        </div>
-    </div>
-
-    {{-- TTD --}}
-    <div class="grid grid-cols-3 gap-4 text-center mt-auto">
-        <div><p class="text-xs mb-12">Admin</p><div class="border-t border-slate-900 mx-8"></div></div>
-        <div><p class="text-xs mb-12">Operator</p><div class="border-t border-slate-900 mx-8"></div><p class="text-xs font-bold">{{ Auth::user()->name }}</p></div>
-        <div><p class="text-xs mb-12">QC / Logistik</p><div class="border-t border-slate-900 mx-8"></div></div>
-    </div>
-
-    <div class="fixed bottom-0 w-full text-center text-[10px] text-slate-400 pt-2 border-t mt-4 no-print">
-        Dicetak pada: {{ now()->format('d/m/Y H:i') }}
-    </div>
+    <script>
+        window.onload = function() {
+            window.print();
+        }
+    </script>
 </body>
 </html>
