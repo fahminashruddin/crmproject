@@ -8,24 +8,21 @@ use Illuminate\Support\Facades\Auth;
 
 class ProduksiController extends Controller
 {
-    // === MIDDLEWARE MANUaAL ===
+    // === MIDDLEWARE ===
     protected function ensureProduksi()
     {
-        // Asumsi role 'produksi' ada di tabel roles
         $roleId = DB::table('roles')->whereRaw('LOWER(nama_role) = ?', ['produksi'])->value('id');
-
-        // Bypass check jika role tidak ditemukan (untuk dev) atau sesuaikan logic auth Anda
         if (Auth::check() && $roleId && Auth::user()->role_id != $roleId) {
              abort(403, 'Unauthorized. Hanya tim Produksi yang boleh masuk sini.');
         }
     }
 
-    // === 1. DASHBOARD UTAMA ===
+    // === 1. DASHBOARD UTAMA (Full Statistik & Antrian) ===
     public function dashboard()
     {
         $this->ensureProduksi();
 
-        // --- 1. Hitung Statistik ---
+        // A. Hitung Statistik
         $stats = DB::table('pesanans')
             ->join('status_pesanans', 'pesanans.status_pesanan_id', '=', 'status_pesanans.id')
             ->select('status_pesanans.nama_status', DB::raw('count(*) as total'))
@@ -33,42 +30,49 @@ class ProduksiController extends Controller
             ->pluck('total', 'nama_status')
             ->toArray();
 
-        $menunggu = ($stats['Menunggu'] ?? 0) + ($stats['Desain Disetujui'] ?? 0);
-        $sedangProses = $stats['Produksi'] ?? 0;
-        $selesai = $stats['Selesai'] ?? 0;
+        // Mapping Status
+        $menunggu = ($stats['Pending'] ?? 0) + ($stats['Menunggu'] ?? 0) + ($stats['Desain Disetujui'] ?? 0); 
+        $sedangProses = ($stats['Diproses'] ?? 0) + ($stats['Produksi'] ?? 0) + ($stats['Sedang Diproduksi'] ?? 0);
+        $selesai = ($stats['Selesai'] ?? 0);
 
-        // --- 2. Ambil Antrian Produksi (Untuk List Card) ---
+        // B. Ambil 5 Antrian Teratas (Untuk Widget Dashboard)
         $antrian = DB::table('pesanans')
             ->join('pelanggans', 'pesanans.pelanggan_id', '=', 'pelanggans.id')
             ->join('status_pesanans', 'pesanans.status_pesanan_id', '=', 'status_pesanans.id')
-            ->leftJoin('desains', 'pesanans.id', '=', 'desains.pesanan_id')
             ->select(
                 'pesanans.id',
                 'pesanans.tanggal_pesanan',
-                'pesanans.catatan',
                 'pelanggans.nama as nama_pelanggan',
-                'status_pesanans.nama_status as status_produksi',
-                'desains.file_desain_path'
+                'status_pesanans.nama_status as status_produksi'
             )
-            ->whereIn('status_pesanans.nama_status', ['Desain Disetujui', 'Menunggu', 'Produksi'])
+            ->whereIn('status_pesanans.nama_status', ['Pending', 'Diproses', 'Produksi', 'Desain Disetujui', 'Menunggu'])
             ->orderBy('pesanans.updated_at', 'desc')
-            ->limit(10) // Limit antrian di dashboard agar tidak terlalu panjang
+            ->limit(5)
             ->get();
 
-        // Inject detail item
+        // Inject detail (Layanan/Spesifikasi)
         foreach ($antrian as $item) {
-            $this->injectOrderDetails($item);
+            $detail = DB::table('detail_pesanans')
+                ->join('jenis_layanans', 'detail_pesanans.jenis_layanan_id', '=', 'jenis_layanans.id')
+                ->where('detail_pesanans.pesanan_id', $item->id)
+                ->select('detail_pesanans.jumlah', 'detail_pesanans.spesifikasi', 'jenis_layanans.nama_layanan')
+                ->first();
+
+            $item->jumlah = $detail ? $detail->jumlah : 0;
+            $item->jenis_layanan = $detail ? $detail->nama_layanan : '-';
+            $item->spesifikasi = $detail ? $detail->spesifikasi : null;
         }
 
         return view('produksi.dashboard', compact('menunggu', 'sedangProses', 'selesai', 'antrian'));
     }
 
-    // === 2. HALAMAN MENU PRODUKSI (LIST LENGKAP) ===
+    // === 2. HALAMAN DAFTAR SEMUA PRODUKSI (Clean UI) ===
+  // === 2. HALAMAN DAFTAR SEMUA PRODUKSI ===
     public function productions(Request $request)
     {
         $this->ensureProduksi();
 
-        // --- HITUNG STATISTIK (PENTING: Agar tidak error di view productions) ---
+        // 1. Hitung Statistik
         $stats = DB::table('pesanans')
             ->join('status_pesanans', 'pesanans.status_pesanan_id', '=', 'status_pesanans.id')
             ->select('status_pesanans.nama_status', DB::raw('count(*) as total'))
@@ -76,27 +80,23 @@ class ProduksiController extends Controller
             ->pluck('total', 'nama_status')
             ->toArray();
 
-        $menunggu = ($stats['Menunggu'] ?? 0) + ($stats['Desain Disetujui'] ?? 0);
-        $sedangProses = $stats['Produksi'] ?? 0;
-        $selesai = $stats['Selesai'] ?? 0;
+        $menunggu = ($stats['Pending'] ?? 0) + ($stats['Menunggu'] ?? 0) + ($stats['Desain Disetujui'] ?? 0); 
+        $sedangProses = ($stats['Diproses'] ?? 0) + ($stats['Produksi'] ?? 0) + ($stats['Sedang Diproduksi'] ?? 0);
+        $selesai = ($stats['Selesai'] ?? 0);
 
-        // --- QUERY UTAMA LIST PESANAN ---
+        // 2. Query Utama
         $query = DB::table('pesanans')
             ->join('pelanggans', 'pesanans.pelanggan_id', '=', 'pelanggans.id')
             ->join('status_pesanans', 'pesanans.status_pesanan_id', '=', 'status_pesanans.id')
-            ->leftJoin('desains', 'pesanans.id', '=', 'desains.pesanan_id')
+            ->leftJoin('desains', 'pesanans.id', '=', 'desains.pesanan_id') 
             ->select(
                 'pesanans.id',
                 'pesanans.tanggal_pesanan',
-                'pesanans.catatan',
                 'pelanggans.nama as nama_pelanggan',
-                'pelanggans.telepon',
                 'status_pesanans.nama_status as status_produksi',
                 'desains.file_desain_path'
-            )
-            ->whereIn('status_pesanans.nama_status', ['Desain Disetujui', 'Menunggu', 'Produksi', 'Selesai']);
+            );
 
-        // Filter Pencarian
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
             $query->where(function($q) use ($search) {
@@ -105,103 +105,67 @@ class ProduksiController extends Controller
             });
         }
 
-        // Filter Tab Status
-        if ($request->has('status') && $request->status != '') {
-            $query->where('status_pesanans.nama_status', $request->status);
-        }
-
         $productions = $query->orderBy('pesanans.updated_at', 'desc')->paginate(10);
 
-        // Inject detail item untuk setiap baris
+        // 3. Inject Detail & Logika Tampilan (PINDAH KE SINI AGAR BLADE BERSIH)
         foreach ($productions as $item) {
-            $this->injectOrderDetails($item);
+            $detail = DB::table('detail_pesanans')
+                ->join('jenis_layanans', 'detail_pesanans.jenis_layanan_id', '=', 'jenis_layanans.id')
+                ->where('detail_pesanans.pesanan_id', $item->id)
+                ->select('detail_pesanans.jumlah', 'detail_pesanans.spesifikasi', 'jenis_layanans.nama_layanan')
+                ->first();
+
+            $item->jumlah = $detail ? $detail->jumlah : 0;
+            $item->layanan = $detail ? $detail->nama_layanan : '-';
+            $item->spesifikasi = $detail ? $detail->spesifikasi : '-';
+            $item->nama_file_desain = $item->file_desain_path ? basename($item->file_desain_path) : 'Tidak ada file';
+
+            // --- LOGIKA TAMPILAN (Label & Warna) ---
+            $item->label_status = match($item->status_produksi) {
+                'Diproses', 'Produksi', 'Sedang Diproduksi' => 'Sedang Diproduksi',
+                'Pending', 'Menunggu', 'Desain Disetujui' => 'Menunggu Produksi',
+                'Selesai' => 'Selesai',
+                'Dibatalkan' => 'Dibatalkan',
+                default => $item->status_produksi
+            };
+
+            $item->warna_badge = match($item->status_produksi) {
+                'Selesai' => 'bg-green-600',
+                'Dibatalkan' => 'bg-red-600',
+                default => 'bg-black'
+            };
         }
 
-        // Return view dengan membawa variabel statistik juga
-        return view('produksi.productions', compact('productions', 'menunggu', 'sedangProses', 'selesai'));
-    }
-
-    // === HELPER: Mengambil Detail Pesanan (Refactored) ===
-    // Digunakan oleh dashboard() dan productions() agar kodenya tidak berulang
-    private function injectOrderDetails($item)
-    {
-        $detail = DB::table('detail_pesanans')
-            ->join('jenis_layanans', 'detail_pesanans.jenis_layanan_id', '=', 'jenis_layanans.id')
-            ->where('detail_pesanans.pesanan_id', $item->id)
-            ->select(
-                'detail_pesanans.jumlah',
-                'detail_pesanans.spesifikasi',
-                'jenis_layanans.nama_layanan'
-            )
-            ->first();
-
-        $item->jumlah = $detail ? $detail->jumlah : 0;
-        $item->layanan = $detail ? $detail->nama_layanan : '-';
-        $item->spesifikasi = $detail ? $detail->spesifikasi : '-';
-
-        // Bersihkan nama file agar terlihat rapi
-        $item->nama_file_desain = $item->file_desain_path ? basename($item->file_desain_path) : 'Belum ada file';
+        return view('produksi.productions', compact('menunggu', 'sedangProses', 'selesai', 'productions'));
     }
 
     // === 3. AKSI: MULAI PRODUKSI ===
     public function startProduction($id)
     {
         $this->ensureProduksi();
-
-        // Cari ID status 'Produksi'
-        $statusId = DB::table('status_pesanans')->where('nama_status', 'Produksi')->value('id');
-
+        $statusId = DB::table('status_pesanans')->whereIn('nama_status', ['Diproses', 'Produksi'])->value('id');
+        
         if ($statusId) {
-            DB::table('pesanans')->where('id', $id)->update([
-                'status_pesanan_id' => $statusId,
-                'updated_at' => now()
-            ]);
-            return redirect()->back()->with('success', 'Status pesanan berhasil diubah menjadi Sedang Diproduksi.');
+            DB::table('pesanans')->where('id', $id)->update(['status_pesanan_id' => $statusId, 'updated_at' => now()]);
+            return redirect()->back()->with('success', 'Status berhasil diubah menjadi Sedang Diproduksi.');
         }
-
-        return redirect()->back()->with('error', 'Gagal: Status "Produksi" tidak ditemukan di database.');
+        return redirect()->back()->with('error', 'Status "Diproses" tidak ditemukan di database.');
     }
 
     // === 4. AKSI: SELESAI PRODUKSI ===
     public function completeProduction($id)
     {
         $this->ensureProduksi();
-
-        // Cari ID status 'Selesai'
         $statusId = DB::table('status_pesanans')->where('nama_status', 'Selesai')->value('id');
-
+        
         if ($statusId) {
-            DB::table('pesanans')->where('id', $id)->update([
-                'status_pesanan_id' => $statusId,
-                'updated_at' => now()
-            ]);
-            return redirect()->back()->with('success', 'Pesanan telah selesai diproduksi! Kerja bagus.');
+            DB::table('pesanans')->where('id', $id)->update(['status_pesanan_id' => $statusId, 'updated_at' => now()]);
+            return redirect()->back()->with('success', 'Pesanan selesai diproduksi.');
         }
-
-        return redirect()->back()->with('error', 'Gagal: Status "Selesai" tidak ditemukan di database.');
+        return redirect()->back()->with('error', 'Status "Selesai" tidak ditemukan di database.');
     }
 
-    // === 5. HALAMAN DAFTAR KENDALA ===
-    public function issues()
-    {
-        $this->ensureProduksi();
-
-        // Ambil data kendala
-        $issues = DB::table('kendala_produksis')
-            ->join('pesanans', 'kendala_produksis.pesanan_id', '=', 'pesanans.id')
-            ->join('pelanggans', 'pesanans.pelanggan_id', '=', 'pelanggans.id')
-            ->select(
-                'kendala_produksis.*',
-                'pesanans.id as order_id',
-                'pelanggans.nama as nama_pelanggan'
-            )
-            ->orderBy('kendala_produksis.created_at', 'desc')
-            ->paginate(10);
-
-        return view('produksi.issues', compact('issues'));
-    }
-
-    // === 6. AKSI: SIMPAN LAPORAN KENDALA (DARI MODAL) ===
+    // === 5. SIMPAN KENDALA (Fix Produksi ID) ===
     public function storeIssue(Request $request)
     {
         $this->ensureProduksi();
@@ -211,51 +175,70 @@ class ProduksiController extends Controller
             'deskripsi' => 'required|string',
         ]);
 
+        // Cari ID Produksi
+        $produksi = DB::table('produksis')->where('pesanan_id', $request->pesanan_id)->first();
+
+        if (!$produksi) {
+            $produksiId = DB::table('produksis')->insertGetId([
+                'pesanan_id' => $request->pesanan_id,
+                'tanggal_mulai' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } else {
+            $produksiId = $produksi->id;
+        }
+
         DB::table('kendala_produksis')->insert([
-            'pesanan_id' => $request->pesanan_id,
-            'deskripsi' => $request->deskripsi,
-            'waktu_terjadi' => now(), // Pastikan kolom ini ada di DB atau sesuaikan
-            'produksi_id' => 1, // PERHATIAN: Sesuaikan logika ini. Biasanya perlu cari ID produksi aktif dari pesanan tsb.
-            // Jika tabel kendala butuh user penanggung jawab dan kolomnya ada:
-            // 'user_id' => Auth::id(),
+            'produksi_id' => $produksiId, 
+            'deskripsi_kendala' => $request->deskripsi, // Sesuai DB
+            'waktu_terjadi' => now(),
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-        return redirect()->back()->with('success', 'Laporan kendala berhasil dikirim ke manajemen.');
+        return redirect()->back()->with('success', 'Laporan kendala berhasil dikirim.');
     }
 
-    // === 7. CETAK JOB SHEET (SPK) ===
+    // === 6. PRINT JOB SHEET (Fix Telepon) ===
     public function printJobSheet($id)
     {
         $this->ensureProduksi();
-
-        // 1. Ambil data pesanan lengkap
         $item = DB::table('pesanans')
             ->join('pelanggans', 'pesanans.pelanggan_id', '=', 'pelanggans.id')
             ->join('status_pesanans', 'pesanans.status_pesanan_id', '=', 'status_pesanans.id')
             ->leftJoin('desains', 'pesanans.id', '=', 'desains.pesanan_id')
             ->select(
-                'pesanans.id',
-                'pesanans.tanggal_pesanan',
-                'pesanans.catatan',
-                'pelanggans.nama as nama_pelanggan',
-                'pelanggans.telepon',
-                'pelanggans.alamat',
-                'status_pesanans.nama_status as status_produksi',
+                'pesanans.*', 
+                'pelanggans.nama as nama_pelanggan', 
+                'pelanggans.telepon', // Menggunakan kolom 'telepon' sesuai DB
+                'pelanggans.alamat', 
+                'status_pesanans.nama_status as status_produksi', 
                 'desains.file_desain_path'
             )
-            ->where('pesanans.id', $id)
-            ->first();
+            ->where('pesanans.id', $id)->first();
 
-        if (!$item) {
-            return redirect()->back()->with('error', 'Data pesanan tidak ditemukan.');
-        }
+        if (!$item) return redirect()->back()->with('error', 'Data pesanan tidak ditemukan.');
 
-        // 2. Inject detail barang menggunakan helper yang sama
-        $this->injectOrderDetails($item);
+        $detail = DB::table('detail_pesanans')
+            ->join('jenis_layanans', 'detail_pesanans.jenis_layanan_id', '=', 'jenis_layanans.id')
+            ->where('detail_pesanans.pesanan_id', $item->id)
+            ->select('detail_pesanans.jumlah', 'detail_pesanans.spesifikasi', 'jenis_layanans.nama_layanan')->first();
 
-        // 3. Tampilkan View Khusus Print
+        $item->jumlah = $detail ? $detail->jumlah : 0;
+        $item->layanan = $detail ? $detail->nama_layanan : '-';
+        $item->spesifikasi = $detail ? $detail->spesifikasi : '-';
+        $item->file_desain = $item->file_desain_path ? basename($item->file_desain_path) : '-';
+
         return view('produksi.print_job_sheet', compact('item'));
+    }
+    
+    // === 7. HALAMAN ISSUES ===
+    public function issues() 
+    { 
+        $this->ensureProduksi();
+        // Placeholder query, sesuaikan jika ingin menampilkan list kendala
+        $issues = DB::table('kendala_produksis')->orderBy('created_at', 'desc')->paginate(10);
+        return view('produksi.issues', compact('issues')); 
     }
 }
