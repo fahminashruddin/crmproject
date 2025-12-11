@@ -2,21 +2,38 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 class PelangganSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         DB::table('pelanggans')->insert([
-            ['nama' => 'Fahmi Nashruddin', 'email' => 'fahmi@example.com', 'telepon' => '081234567890'],
-            ['nama' => 'Reva Alifia', 'email' => 'reva@example.com', 'telepon' => '081298765432'],
-            ['nama' => 'Fairuz Hanif', 'email' => 'fairuz@example.com', 'telepon' => '081277788899'],
+            [
+                'nama' => 'PT. Maju Jaya',
+                'email' => 'info@majujaya.com',
+                'no_hp' => '6281234567890', // Format 62 agar bisa langsung WA
+                'alamat' => 'Jl. Sudirman No. 10 Jakarta',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'nama' => 'Toko Berkah',
+                'email' => 'owner@tokoberkah.com',
+                'no_hp' => '6289876543210',
+                'alamat' => 'Jl. Ahmad Yani No. 5 Bandung',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'nama' => 'CV. Kreatif Mandiri',
+                'email' => 'hello@kreatif.id',
+                'no_hp' => '628555666777',
+                'alamat' => 'Jl. Dago No. 100 Bandung',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
         ]);
     }
 }
