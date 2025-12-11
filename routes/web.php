@@ -22,6 +22,10 @@ use App\Http\Controllers\ManajemenExportController;
 // === 1. ROUTE UNTUK TAMU (BELUM LOGIN) ===
 Route::middleware(['guest'])->group(function () {
 
+    Route::get('/', function () {
+    return redirect()->route('login');
+});
+
     // Login Umum
     Route::get('/login', [AuthController::class, 'index'])->name('login');
     Route::post('/login', [AuthController::class, 'authenticate'])->name('login.post');
@@ -33,10 +37,13 @@ Route::middleware(['guest'])->group(function () {
     });
 
     // Login Khusus Desain
-    Route::prefix('desain')->name('desain.')->group(function () {
-        Route::get('login', [AuthController::class, 'index'])->name('login')->defaults('role', 'desain');
-        Route::post('login', [AuthController::class, 'authenticate'])->name('login.post')->defaults('role', 'desain');
-    });
+   Route::prefix('desain')->name('desain.')->group(function () {
+    Route::get('login', [AuthController::class, 'index'])->name('login')->defaults('role', 'desain');
+    Route::post('login', [AuthController::class, 'authenticate'])->name('login.post')->defaults('role', 'desain');
+});
+
+
+
 
     // Login Khusus Produksi
     Route::prefix('produksi')->name('produksi.')->group(function () {
@@ -93,7 +100,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
         Route::get('orders', [AdminController::class, 'orders'])->name('orders');
-        Route::get('orders', [AdminController::class, 'orders'])->name('orders');
+
         Route::post('orders', [AdminController::class, 'storeOrder'])->name('orders.store');
         Route::patch('orders/{id}/update', [AdminController::class, 'updateOrder'])->name('orders.update');
         Route::get('payments', [AdminController::class, 'payments'])->name('payments');
@@ -108,10 +115,13 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // --- B. AREA DESAIN ---
-    Route::prefix('desain')->name('desain.')->group(function () {
-        Route::get('dashboard', [DesainController::class, 'dashboard'])->name('dashboard');
-        Route::get('designs', [DesainController::class, 'designs'])->name('designs');
-        Route::get('revisions', [DesainController::class, 'revisions'])->name('revisions');
+    Route::prefix('desain')->middleware(['auth'])->group(function () {
+    Route::get('/dashboard', [DesainController::class, 'dashboard'])->name('desain.dashboard');
+    Route::get('/kelola', [DesainController::class, 'kelolaDesain'])->name('desain.kelola');
+    Route::get('/designs', [DesainController::class, 'designs'])->name('desain.designs');
+    Route::get('/revisions', [DesainController::class, 'revisions'])->name('desain.revisions');
+    Route::get('/riwayat', [DesainController::class, 'riwayat'])->name('desain.riwayat');
+    Route::get('/template', [DesainController::class, 'pengaturan'])->name('desain.template');
     });
 
     // --- C. AREA PRODUKSI ---
