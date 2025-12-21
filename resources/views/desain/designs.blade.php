@@ -6,20 +6,12 @@
 
 {{-- Hitung variabel overview dari data $designs --}}
 @php
-// --- PERBAIKAN UTAMA DIMULAI DI SINI ---
-// Pastikan $designs adalah Collection yang valid (bukan null)
-$designs = $designs ?? collect([]); 
+$designs = $designs ?? collect([]);
+$designCollection = collect($designs);
 
-// Variabel ini harus disuplai oleh DesainController::kelolaDesain
-// Menggunakan .count() pada Collection (atau count() pada Array) lebih aman.
-$designCollection = collect($designs); // Convert to Collection for easy chaining
-
-$total = $designCollection->count();
-// Gunakan metode Collection untuk filter dan count
-$inProgress = $designCollection->where('status_desain', 'Menunggu Desain')->count();
-$done = $designCollection->where('status_desain', 'Disetujui')->count();
-$revisi = $designCollection->where('status_desain', 'Perlu Revisi')->count();
-// --- PERBAIKAN UTAMA SELESAI ---
+$inProgress = $designCollection->where('status_desain', 'Menunggu')->count();
+$revisi     = $designCollection->where('status_desain', 'Revisi')->count();
+$done       = $designCollection->where('status_desain', 'Disetujui')->count();
 @endphp
 
 <!-- JUDUL + STATUS -->

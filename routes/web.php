@@ -118,7 +118,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('desain')->middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DesainController::class, 'dashboard'])->name('desain.dashboard');
     Route::get('/kelola', [DesainController::class, 'kelolaDesain'])->name('desain.kelola');
-    Route::get('/designs', [DesainController::class, 'designs'])->name('desain.designs');
+    Route::get('/designs', [DesainController::class, 'kelolaDesain'])->name('desain.designs');
     Route::get('/revisions', [DesainController::class, 'revisions'])->name('desain.revisions');
     Route::get('/riwayat', [DesainController::class, 'riwayat'])->name('desain.riwayat');
     Route::get('/template', [DesainController::class, 'pengaturan'])->name('desain.template');

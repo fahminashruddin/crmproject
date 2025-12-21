@@ -39,41 +39,52 @@ class DesainController extends Controller
      */
     public function index()
     {
-        return $this->kelolaDesain();
-    }
+        $designs = Desain::with([
+            'pesanan.pelanggan',
+            'statusDesain'
+        ])->latest()->get();
 
-    /**
-     * Dashboard Desainer
-     * (Menggunakan data dummy agar tidak error)
-     */
+        return view('desain.designs', compact('designs'));
+    }
     public function dashboard()
     {
-        $antrian = [
-            (object)[
-                'id' => 1,
-                'nama_pelanggan' => 'Budi Santoso',
-                'status' => 'Menunggu',
-                'status_desain' => 'Menunggu Desain',
-                'deadline' => '2025-12-01',
-                'created_at' => '2025-11-25 10:30:00'
-            ],
-            (object)[
-                'id' => 2,
-                'nama_pelanggan' => 'Siti Aminah',
-                'status' => 'Proses',
-                'status_desain' => 'Perlu Revisi',
-                'deadline' => '2025-12-02',
-                'created_at' => '2025-11-26 14:00:00'
-            ],
-            (object)[
-                'id' => 3,
-                'nama_pelanggan' => 'Joko Pratama',
-                'status' => 'Review',
-                'status_desain' => 'Menunggu Persetujuan',
-                'deadline' => '2025-12-05',
-                'created_at' => '2025-11-27 09:15:00'
-            ],
-        ];
+         $antrian = DB::table('desains')
+        ->leftJoin('pesanans', 'desains.pesanan_id', '=', 'pesanans.id')
+        ->leftJoin('pelanggans', 'pesanans.pelanggan_id', '=', 'pelanggans.id')
+        ->leftJoin('status_desains', 'desains.status_desain_id', '=', 'status_desains.id')
+        ->select(
+            'pesanans.id',
+            'pelanggans.nama as nama_pelanggan',
+            'status_desains.nama_status as status_desain',
+            'desains.created_at'
+        )
+        ->orderBy('desains.created_at', 'desc')
+        ->get();
+
+    // ===============================
+    // STATISTIK DASHBOARD
+    // ===============================
+    $menunggu = DB::table('desains')
+        ->join('status_desains', 'desains.status_desain_id', '=', 'status_desains.id')
+        ->whereRaw('LOWER(status_desains.nama_status) LIKE ?', ['%menunggu%'])
+        ->count();
+
+    $sedangProses = DB::table('desains')
+        ->join('status_desains', 'desains.status_desain_id', '=', 'status_desains.id')
+        ->whereRaw('LOWER(status_desains.nama_status) LIKE ?', ['%setuju%'])
+        ->count();
+
+    $selesai = DB::table('desains')
+        ->join('status_desains', 'desains.status_desain_id', '=', 'status_desains.id')
+        ->whereRaw('LOWER(status_desains.nama_status) LIKE ?', ['%revisi%'])
+        ->count();
+
+    return view('desain.dashboard', compact(
+        'antrian',
+        'menunggu',
+        'sedangProses',
+        'selesai'
+    ));
 
         return view('desain.dashboard', compact('antrian'));
     }
@@ -82,53 +93,39 @@ class DesainController extends Controller
      * Halaman utama kelola desain
      * (Data dummy untuk tabel)
      */
-    public function kelolaDesain()
-    {
-        $designs = [
-            (object)[
-                'id_pesanan' => 'ORD-101',
-                'pelanggan' => 'PT. Sinar Abadi',
-                'produk' => 'Spanduk 3x1m (Vinyl)',
-                'tgl_dipesan' => '2025-11-20',
-                'prioritas' => 'Tinggi',
-                'status_desain' => 'Perlu Revisi',
-            ],
-            (object)[
-                'id_pesanan' => 'ORD-102',
-                'pelanggan' => 'Jaya Makmur Corp',
-                'produk' => 'Brosur A5 (Art Paper 150)',
-                'tgl_dipesan' => '2025-11-25',
-                'prioritas' => 'Normal',
-                'status_desain' => 'Menunggu Desain',
-            ],
-            (object)[
-                'id_pesanan' => 'ORD-103',
-                'pelanggan' => 'Digital Kreasindo',
-                'produk' => 'Kartu Nama (Doft)',
-                'tgl_dipesan' => '2025-11-26',
-                'prioritas' => 'Normal',
-                'status_desain' => 'Menunggu Persetujuan',
-            ],
-            (object)[
-                'id_pesanan' => 'ORD-104',
-                'pelanggan' => 'Solusi Cetak Cepat',
-                'produk' => 'Flyer Promosi',
-                'tgl_dipesan' => '2025-11-27',
-                'prioritas' => 'Rendah',
-                'status_desain' => 'Disetujui',
-            ],
-            (object)[
-                'id_pesanan' => 'ORD-105',
-                'pelanggan' => 'Mandiri Printing',
-                'produk' => 'Roll Banner 80x200',
-                'tgl_dipesan' => '2025-11-18',
-                'prioritas' => 'Tinggi',
-                'status_desain' => 'Menunggu Desain',
-            ],
-        ];
+  public function kelolaDesain()
+{
+    $designs = DB::table('desains')
+        ->leftJoin('pesanans', 'desains.pesanan_id', '=', 'pesanans.id')
+        ->leftJoin('pelanggans', 'pesanans.pelanggan_id', '=', 'pelanggans.id')
+        ->leftJoin('status_desains', 'desains.status_desain_id', '=', 'status_desains.id')
+        ->leftJoin('detail_pesanans', 'pesanans.id', '=', 'detail_pesanans.pesanan_id')
+        ->select(
+            DB::raw("CONCAT('ORD-', LPAD(pesanans.id, 3, '0')) as nomor_order"),
+            'pelanggans.nama as pelanggan',
+            'pesanans.tanggal_pesanan as tanggal_order',
+            'status_desains.nama_status as status_desain',
 
-        return view('desain.designs', compact('designs'));
-    }
+            // dari detail_pesanans (yang PASTI ADA)
+            'detail_pesanans.jenis_layanan_id',
+            'detail_pesanans.jumlah',
+            'detail_pesanans.harga_satuan',
+            'detail_pesanans.subtotal',
+
+            'desains.catatan_revisi as catatan_desain',
+            'desains.created_at'
+        )
+        ->orderBy('desains.created_at', 'desc')
+        ->get();
+
+    return view('desain.designs', compact('designs'));
+}
+
+
+
+
+
+
 
     /**
      * Halaman revisi desain
