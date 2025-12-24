@@ -47,6 +47,46 @@ class ProduksiSeeder extends Seeder
 
             // Tentukan apakah produksi sudah selesai atau belum (50:50 chance)
             $isCompleted = (bool)rand(0, 1);
+            $tanggalSelesai = $isCompleted 
+                ? $tanggalMulai->copy()->addDays(rand(3, 10))
+                : $tanggalMulai->copy()->addDays(rand(5, 14));
+
+            // Status
+            $status = $isCompleted ? 'selesai' : (rand(0, 1) ? 'berjalan' : 'pending');
+
+            DB::table('produksis')->insertOrIgnore([
+                'pesanan_id' => $pesananId,
+                'tanggal_mulai' => $tanggalMulai,
+                'tanggal_selesai' => $tanggalSelesai,
+                'status_produksi' => $status,
+                'catatan' => $catatanList[array_rand($catatanList)],
+                'created_at' => $tanggalMulai,
+                'updated_at' => now(),
+            ]);
+        }
+
+        // 4. Insert sample inventorys
+        $inventories = [
+            ['nama_produk' => 'Kertas A4 Premium', 'jumlah' => 500, 'satuan' => 'ream', 'lokasi' => 'Rak A1', 'keterangan' => 'Stok dari supplier terpercaya'],
+            ['nama_produk' => 'Kertas HVS 70 gr', 'jumlah' => 20, 'satuan' => 'ream', 'lokasi' => 'Rak A2', 'keterangan' => 'Stock menipis, segera order'],
+            ['nama_produk' => 'Tinta Hitam', 'jumlah' => 5, 'satuan' => 'liter', 'lokasi' => 'Gudang Utama', 'keterangan' => null],
+            ['nama_produk' => 'Tinta Warna CMYK', 'jumlah' => 8, 'satuan' => 'liter', 'lokasi' => 'Gudang Utama', 'keterangan' => null],
+            ['nama_produk' => 'Plastik Laminating Glossy', 'jumlah' => 3, 'satuan' => 'roll', 'lokasi' => 'Rak B1', 'keterangan' => 'Untuk finishing produk premium'],
+            ['nama_produk' => 'Plastik Laminating Doff', 'jumlah' => 15, 'satuan' => 'roll', 'lokasi' => 'Rak B2', 'keterangan' => null],
+            ['nama_produk' => 'Kawat Spiral Hitam', 'jumlah' => 100, 'satuan' => 'pcs', 'lokasi' => 'Rak C1', 'keterangan' => null],
+            ['nama_produk' => 'Lem Kertas', 'jumlah' => 2, 'satuan' => 'kg', 'lokasi' => 'Gudang Utama', 'keterangan' => 'Persediaan terbatas'],
+        ];
+
+        foreach ($inventories as $inventory) {
+            DB::table('inventorys')->insertOrIgnore(array_merge($inventory, [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]));
+        }
+
+        $this->command->info('ProduksiSeeder berhasil dijalankan!');
+    }
+}
 
             $tanggalSelesai = null;
 
