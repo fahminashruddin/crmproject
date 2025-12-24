@@ -78,6 +78,18 @@
     <i data-lucide="palette" class="h-4 w-4"></i>
     Kelola Desain
 </a>
+<a href="{{ route('desain.jadwal-produksi') }}"
+    class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors
+    {{ request()->routeIs('desain.jadwal-produksi') ? 'bg-slate-900 text-white' : 'text-slate-700 hover:bg-slate-100' }}">
+    <i data-lucide="calendar" class="h-4 w-4"></i>
+    Jadwal produksi
+</a>
+<a href="{{ route('desain.inventory') }}"
+    class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors
+    {{ request()->routeIs('desain.inventory') ? 'bg-slate-900 text-white' : 'text-slate-700 hover:bg-slate-100' }}">
+    <i data-lucide="box" class="h-4 w-4"></i>
+    Inventory
+</a>
 
                         <a href="{{ route('desain.template') }}" 
                             class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors

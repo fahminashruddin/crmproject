@@ -112,6 +112,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DesainController::class, 'dashboard'])->name('desain.dashboard');
     Route::get('/kelola', [DesainController::class, 'kelolaDesain'])->name('desain.kelola');
     Route::get('/designs', [DesainController::class, 'designs'])->name('desain.designs');
+    Route::get('/jadwal-produksi', [DesainController::class, 'jadwalProduksi'])->name('desain.jadwal-produksi');
+    Route::post('/jadwal-produksi', [DesainController::class, 'storeJadwalProduksi'])->name('desain.jadwal-produksi.store');
+    Route::get('/inventory', [DesainController::class, 'inventory'])->name('desain.inventory');
+    Route::post('/inventory', [DesainController::class, 'storeInventory'])->name('desain.inventory.store');
     Route::get('/revisions', [DesainController::class, 'revisions'])->name('desain.revisions');
     Route::get('/riwayat', [DesainController::class, 'riwayat'])->name('desain.riwayat');
     Route::get('/template', [DesainController::class, 'pengaturan'])->name('desain.template');
