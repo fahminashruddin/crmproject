@@ -252,6 +252,48 @@ class DesainController extends Controller
     }
 
     /**
+     * Update Inventory
+     */
+    public function updateInventory(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'nama_produk' => 'required|string|max:255',
+            'jumlah' => 'required|integer|min:0',
+            'satuan' => 'required|string|max:50',
+            'lokasi' => 'nullable|string|max:255',
+            'keterangan' => 'nullable|string',
+        ]);
+
+        try {
+            DB::table('inventorys')->where('id', $id)->update([
+                'nama_produk' => $validated['nama_produk'],
+                'jumlah' => $validated['jumlah'],
+                'satuan' => $validated['satuan'],
+                'lokasi' => $validated['lokasi'] ?? null,
+                'keterangan' => $validated['keterangan'] ?? null,
+                'updated_at' => now(),
+            ]);
+
+            return redirect()->route('desain.inventory')->with('success', 'Data inventory berhasil diperbarui');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal memperbarui data inventory: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Delete Inventory
+     */
+    public function deleteInventory($id)
+    {
+        try {
+            DB::table('inventorys')->where('id', $id)->delete();
+            return redirect()->route('desain.inventory')->with('success', 'Data inventory berhasil dihapus');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal menghapus data inventory: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Halaman pengaturan / template desain
      */
   public function pengaturan()

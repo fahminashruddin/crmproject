@@ -233,7 +233,45 @@ class ProduksiController extends Controller
         return view('produksi.print_job_sheet', compact('item'));
     }
     
-    // === 7. HALAMAN ISSUES ===
+    // === 7. HALAMAN JADWAL PRODUKSI (VIEW ONLY) ===
+    public function jadwalProduksi(Request $request)
+    {
+        $this->ensureProduksi();
+        
+        // Ambil data jadwal produksi dari tabel produksis
+        $jadwals = DB::table('produksis')
+            ->leftJoin('pesanans', 'produksis.pesanan_id', '=', 'pesanans.id')
+            ->leftJoin('pelanggans', 'pesanans.pelanggan_id', '=', 'pelanggans.id')
+            ->select(
+                'produksis.*',
+                'pesanans.id as pesanan_id_val',
+                'pelanggans.nama as pelanggan_nama'
+            )
+            ->orderBy('produksis.tanggal_mulai', 'asc')
+            ->paginate(10);
+
+        return view('produksi.jadwal-produksi', compact('jadwals'));
+    }
+
+    // === 8. HALAMAN INVENTORY (VIEW ONLY) ===
+    public function inventory(Request $request)
+    {
+        $this->ensureProduksi();
+        
+        try {
+            // Ambil data inventory/stok dari database
+            $inventorys = DB::table('inventorys')
+                ->orderBy('inventorys.created_at', 'desc')
+                ->paginate(10);
+        } catch (\Exception $e) {
+            // Fallback jika tabel belum ada
+            $inventorys = collect([])->paginate(10);
+        }
+
+        return view('produksi.inventory', compact('inventorys'));
+    }
+    
+    // === 9. HALAMAN ISSUES ===
     public function issues() 
     { 
         $this->ensureProduksi();

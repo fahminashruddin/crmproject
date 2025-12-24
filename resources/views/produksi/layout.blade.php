@@ -70,15 +70,21 @@
                         </a>
 
                         {{-- 3. Jadwal Produksi --}}
-                        <a href="#" 
-                           class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors text-slate-700 hover:bg-slate-100 hover:text-slate-900">
+                        <a href="{{ route('produksi.jadwal-produksi') }}" 
+                           class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors 
+                           {{ request()->routeIs('produksi.jadwal-produksi') 
+                                ? 'bg-slate-900 text-white' 
+                                : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900' }}">
                             <i data-lucide="calendar" class="h-4 w-4"></i>
                             Jadwal Produksi
                         </a>
 
                         {{-- 4. Inventori --}}
-                        <a href="#" 
-                           class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors text-slate-700 hover:bg-slate-100 hover:text-slate-900">
+                        <a href="{{ route('produksi.inventory') }}" 
+                           class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors 
+                           {{ request()->routeIs('produksi.inventory') 
+                                ? 'bg-slate-900 text-white' 
+                                : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900' }}">
                             <i data-lucide="package" class="h-4 w-4"></i>
                             Inventori
                         </a>
