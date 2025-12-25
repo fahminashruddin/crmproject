@@ -238,14 +238,16 @@ class ProduksiController extends Controller
     {
         $this->ensureProduksi();
         
-        // Ambil data jadwal produksi dari tabel produksis
+        // Ambil data jadwal produksi dari tabel produksis dengan join ke pesanans dan status_pesanans
         $jadwals = DB::table('produksis')
             ->leftJoin('pesanans', 'produksis.pesanan_id', '=', 'pesanans.id')
             ->leftJoin('pelanggans', 'pesanans.pelanggan_id', '=', 'pelanggans.id')
+            ->leftJoin('status_pesanans', 'pesanans.status_pesanan_id', '=', 'status_pesanans.id')
             ->select(
                 'produksis.*',
                 'pesanans.id as pesanan_id_val',
-                'pelanggans.nama as pelanggan_nama'
+                'pelanggans.nama as pelanggan_nama',
+                'status_pesanans.nama_status'
             )
             ->orderBy('produksis.tanggal_mulai', 'asc')
             ->paginate(10);
