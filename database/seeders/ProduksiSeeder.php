@@ -86,23 +86,3 @@ class ProduksiSeeder extends Seeder
         $this->command->info('ProduksiSeeder berhasil dijalankan!');
     }
 }
-
-            $tanggalSelesai = null;
-
-            if ($isCompleted) {
-                // Jika selesai, tanggal selesai = tanggal mulai + durasi pengerjaan (1-7 hari)
-                $tanggalSelesai = (clone $tanggalMulai)->addDays(rand(1, 7));
-            }
-
-            // Insert ke database
-            DB::table('produksis')->insert([
-                'pesanan_id'      => $pesananId,
-                'tanggal_mulai'   => $tanggalMulai->toDateString(), // Format Y-m-d
-                'tanggal_selesai' => $tanggalSelesai ? $tanggalSelesai->toDateString() : null,
-                'catatan'         => $catatanList[array_rand($catatanList)],
-                'created_at'      => now(),
-                'updated_at'      => now(),
-            ]);
-        }
-    }
-}
