@@ -148,6 +148,153 @@ class DesainController extends Controller
     }
 
     /**
+     * Halaman Jadwal Produksi
+     */
+    public function jadwalProduksi(Request $request)
+    {
+        // Ambil data jadwal produksi dari tabel produksis
+        $jadwals = DB::table('produksis')
+            ->leftJoin('pesanans', 'produksis.pesanan_id', '=', 'pesanans.id')
+            ->leftJoin('pelanggans', 'pesanans.pelanggan_id', '=', 'pelanggans.id')
+            ->select(
+                'produksis.*',
+                'pesanans.id as pesanan_id_val',
+                'pelanggans.nama as pelanggan_nama'
+            )
+            ->orderBy('produksis.tanggal_mulai', 'asc')
+            ->paginate(10);
+
+        // Ambil data pesanan untuk dropdown
+        $pesanans = DB::table('pesanans')
+            ->leftJoin('pelanggans', 'pesanans.pelanggan_id', '=', 'pelanggans.id')
+            ->select('pesanans.id', 'pelanggans.nama as pelanggan_nama')
+            ->get();
+
+        return view('desain.jadwal-produksi', compact('jadwals', 'pesanans'));
+    }
+
+    /**
+     * Store Jadwal Produksi
+     */
+    public function storeJadwalProduksi(Request $request)
+    {
+        $validated = $request->validate([
+            'pesanan_id' => 'required|exists:pesanans,id',
+            'tanggal_mulai' => 'required|date',
+            'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
+            'status_produksi' => 'required|in:pending,berjalan,selesai,tertunda',
+            'catatan' => 'nullable|string',
+        ]);
+
+        DB::table('produksis')->insert([
+            'pesanan_id' => $validated['pesanan_id'],
+            'tanggal_mulai' => $validated['tanggal_mulai'],
+            'tanggal_selesai' => $validated['tanggal_selesai'],
+            'status_produksi' => $validated['status_produksi'],
+            'catatan' => $validated['catatan'] ?? null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return redirect()->route('desain.jadwal-produksi')->with('success', 'Jadwal produksi berhasil ditambahkan');
+    }
+
+    /**
+     * Halaman Inventory
+     */
+    public function inventory(Request $request)
+    {
+        try {
+            // Ambil data inventory/stok dari database
+            $inventorys = DB::table('inventorys')
+                ->leftJoin('produksis', 'inventorys.produksi_id', '=', 'produksis.id')
+                ->select(
+                    'inventorys.*',
+                    'produksis.id as produksi_id_join'
+                )
+                ->orderBy('inventorys.created_at', 'desc')
+                ->paginate(10);
+        } catch (\Exception $e) {
+            // Fallback jika tabel belum ada
+            $inventorys = collect([])->paginate(10);
+        }
+
+        return view('desain.inventory', compact('inventorys'));
+    }
+
+    /**
+     * Store Inventory
+     */
+    public function storeInventory(Request $request)
+    {
+        $validated = $request->validate([
+            'nama_produk' => 'required|string|max:255',
+            'jumlah' => 'required|integer|min:0',
+            'satuan' => 'required|string|max:50',
+            'lokasi' => 'nullable|string|max:255',
+            'keterangan' => 'nullable|string',
+        ]);
+
+        try {
+            DB::table('inventorys')->insert([
+                'nama_produk' => $validated['nama_produk'],
+                'jumlah' => $validated['jumlah'],
+                'satuan' => $validated['satuan'],
+                'lokasi' => $validated['lokasi'] ?? null,
+                'keterangan' => $validated['keterangan'] ?? null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            return redirect()->route('desain.inventory')->with('success', 'Data inventory berhasil ditambahkan');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal menambahkan data inventory: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Update Inventory
+     */
+    public function updateInventory(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'nama_produk' => 'required|string|max:255',
+            'jumlah' => 'required|integer|min:0',
+            'satuan' => 'required|string|max:50',
+            'lokasi' => 'nullable|string|max:255',
+            'keterangan' => 'nullable|string',
+        ]);
+
+        try {
+            DB::table('inventorys')->where('id', $id)->update([
+                'nama_produk' => $validated['nama_produk'],
+                'jumlah' => $validated['jumlah'],
+                'satuan' => $validated['satuan'],
+                'lokasi' => $validated['lokasi'] ?? null,
+                'keterangan' => $validated['keterangan'] ?? null,
+                'updated_at' => now(),
+            ]);
+
+            return redirect()->route('desain.inventory')->with('success', 'Data inventory berhasil diperbarui');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal memperbarui data inventory: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Delete Inventory
+     */
+    public function deleteInventory($id)
+    {
+        try {
+            DB::table('inventorys')->where('id', $id)->delete();
+            return redirect()->route('desain.inventory')->with('success', 'Data inventory berhasil dihapus');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal menghapus data inventory: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Halaman pengaturan / template desain
      */
   public function pengaturan()

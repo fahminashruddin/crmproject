@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id(); // Pengganti id_produksi
             $table->date('tanggal_mulai')->nullable();
             $table->date('tanggal_selesai')->nullable();
+            $table->enum('status_produksi', ['pending', 'berjalan', 'selesai', 'tertunda'])->default('pending');
             $table->text('catatan')->nullable();
 
             // --- FOREIGN KEY ---

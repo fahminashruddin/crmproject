@@ -130,11 +130,17 @@ Route::middleware(['auth'])->group(function () {
         Route::post('start/{id}', [ProduksiController::class, 'startProduction'])->name('productions.start');
         Route::post('complete/{id}', [ProduksiController::class, 'completeProduction'])->name('productions.complete');
 
-        // 3. Kendala (Issues)
+        // 3. Jadwal Produksi (VIEW ONLY)
+        Route::get('jadwal-produksi', [ProduksiController::class, 'jadwalProduksi'])->name('jadwal-produksi');
+
+        // 4. Inventory (VIEW ONLY)
+        Route::get('inventory', [ProduksiController::class, 'inventory'])->name('inventory');
+
+        // 5. Kendala (Issues)
         Route::get('issues', [ProduksiController::class, 'issues'])->name('issues');
         Route::post('issues', [ProduksiController::class, 'storeIssue'])->name('issues.store');
 
-        // 4. Print Job Sheet
+        // 6. Print Job Sheet
         Route::get('print/{id}', [ProduksiController::class, 'printJobSheet'])->name('print');
     });
 
