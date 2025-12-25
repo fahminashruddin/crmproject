@@ -215,8 +215,8 @@ class DesainController extends Controller
                 ->orderBy('inventorys.created_at', 'desc')
                 ->paginate(10);
         } catch (\Exception $e) {
-            // Fallback jika tabel belum ada
-            $inventorys = collect([])->paginate(10);
+            // Fallback jika tabel belum ada - return empty paginator
+            $inventorys = new \Illuminate\Pagination\Paginator([], 10, 1, []);
         }
 
         return view('desain.inventory', compact('inventorys'));
