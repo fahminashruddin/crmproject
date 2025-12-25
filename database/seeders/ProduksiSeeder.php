@@ -58,7 +58,6 @@ class ProduksiSeeder extends Seeder
                 'pesanan_id' => $pesananId,
                 'tanggal_mulai' => $tanggalMulai,
                 'tanggal_selesai' => $tanggalSelesai,
-                'status_produksi' => $status,
                 'catatan' => $catatanList[array_rand($catatanList)],
                 'created_at' => $tanggalMulai,
                 'updated_at' => now(),
