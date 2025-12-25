@@ -55,28 +55,35 @@ class PesananSeeder extends Seeder
         // Insert 5 data pesanan hanya jika belum ada cukup
         $existingPesanan = DB::table('pesanans')->count();
         if ($existingPesanan < 5) {
-            $pelanggans = DB::table('pelanggans')->limit(5)->pluck('id')->toArray();
+            $pelanggans = DB::table('pelanggans')->pluck('id')->toArray();
             $pengguna = DB::table('penggunas')->first();
             $statusPending = DB::table('status_pesanans')->where('nama_status', 'Pending')->first();
             $statusDiproses = DB::table('status_pesanans')->where('nama_status', 'Diproses')->first();
             
-            if (count($pelanggans) >= 5 && $pengguna && $statusPending) {
-                $pesananBaru = [];
-                for ($i = 0; $i < 5 - $existingPesanan; $i++) {
-                    $pesananBaru[] = [
-                        'tanggal_pesanan' => now()->subDays(10 - $i)->toDateString(),
-                        'catatan' => 'Pesanan ' . ($existingPesanan + $i + 1) . ' dari seeder',
-                        'pelanggan_id' => $pelanggans[$existingPesanan + $i] ?? $pelanggans[0],
-                        'pengguna_id' => $pengguna->id,
-                        'status_pesanan_id' => ($i % 2 == 0) ? $statusPending->id : ($statusDiproses->id ?? $statusPending->id),
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ];
-                }
-                
-                if (!empty($pesananBaru)) {
-                    DB::table('pesanans')->insert($pesananBaru);
-                }
+            // Debug
+            $pelangganCount = count($pelanggans);
+            $penggunaExist = $pengguna ? 1 : 0;
+            $statusExist = $statusPending ? 1 : 0;
+            
+            if ($pelangganCount == 0 || !$pengguna || !$statusPending) {
+                throw new \Exception("Seeder tidak lengkap: pelanggans=$pelangganCount, pengguna=$penggunaExist, status=$statusExist");
+            }
+            
+            $pesananBaru = [];
+            for ($i = 0; $i < 5 - $existingPesanan; $i++) {
+                $pesananBaru[] = [
+                    'tanggal_pesanan' => now()->subDays(10 - $i)->toDateString(),
+                    'catatan' => 'Pesanan ' . ($existingPesanan + $i + 1) . ' dari seeder',
+                    'pelanggan_id' => $pelanggans[$i % $pelangganCount],
+                    'pengguna_id' => $pengguna->id,
+                    'status_pesanan_id' => ($i % 2 == 0) ? $statusPending->id : ($statusDiproses->id ?? $statusPending->id),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+            
+            if (!empty($pesananBaru)) {
+                DB::table('pesanans')->insert($pesananBaru);
             }
         }
     }
