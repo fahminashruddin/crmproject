@@ -13,11 +13,11 @@ class Desain extends Model
     protected $table = 'desains';
 
     // Kolom yang boleh diisi
-    protected $fillable = [
-        'file_desain_path',
-        'catatan_revisi',
-        'status_desain_id',
-        'pesanan_id',
+   protected $fillable = [
+    'pesanan_id',
+    'status_desain_id',
+    'file_desain_path',
+    'catatan_revisi',
     ];
 
     // Relasi ke Pesanan (Sesuai Foreign Key di SQL)
