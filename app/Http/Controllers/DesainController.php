@@ -162,5 +162,58 @@ class DesainController extends Controller
         // Namun, jika Anda menggunakan view 'desain.desain' dari diskusi sebelumnya, ganti 'desain.template' menjadi 'desain.desain'.
         return view('desain.template', compact('templates'));
     }
+    public function setujui(Request $request)
+{
+    $request->validate([
+        'pesanan_id' => 'required|exists:pesanans,id'
+    ]);
+
+    // Ambil ID status "disetujui" (aman dari perbedaan huruf)
+    $statusDisetujui = DB::table('status_desains')
+        ->whereRaw('LOWER(nama_status) = ?', ['disetujui'])
+        ->value('id');
+
+    if (!$statusDisetujui) {
+        return redirect()->back()
+            ->with('error', 'Status Disetujui tidak ditemukan di tabel status_desains');
+    }
+
+    DB::table('desains')
+        ->where('pesanan_id', $request->pesanan_id)
+        ->update([
+            'status_desain_id' => $statusDisetujui,
+            'updated_at'       => now(),
+        ]);
+
+    return redirect()->back()->with('success', 'Desain berhasil disetujui');
+}
+
+
+
+public function revisi(Request $request)
+{
+    $request->validate([
+        'nomor_order'    => 'required',
+        'catatan_revisi' => 'required|string'
+    ]);
+
+    // Ambil ID status "Revisi"
+    $statusRevisi = DB::table('status_desains')
+        ->where('nama_status', 'Revisi')
+        ->value('id');
+
+    DB::table('desains')
+        ->join('pesanans', 'desains.pesanan_id', '=', 'pesanans.id')
+        ->whereRaw("CONCAT('ORD-', LPAD(pesanans.id, 3, '0')) = ?", [$request->nomor_order])
+        ->update([
+            'desains.status_desain_id' => $statusRevisi,
+            'desains.catatan_revisi'   => $request->catatan_revisi,
+            'desains.updated_at'       => now(), // ⬅️ FIX DI SINI
+        ]);
+
+    return redirect()->back()->with('success', 'Desain berhasil dikirim untuk revisi');
+}
+
 
 }
+
