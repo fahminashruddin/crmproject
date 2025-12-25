@@ -30,21 +30,31 @@
                     </div>
                     <div class="flex flex-col items-end gap-2">
                         @php
+                            // Mapping status dari pesanans.status_pesanan_id
                             $statusLabels = [
-                                'pending' => 'Pending',
-                                'berjalan' => 'Sedang Diproduksi',
-                                'selesai' => 'Selesai',
-                                'tertunda' => 'Tertunda',
+                                'Pending' => 'Pending',
+                                'Menunggu' => 'Menunggu',
+                                'Proses Desain' => 'Proses Desain',
+                                'Desain Disetujui' => 'Desain Disetujui',
+                                'Diproses' => 'Sedang Diproduksi',
+                                'Produksi' => 'Sedang Diproduksi',
+                                'Selesai' => 'Selesai',
+                                'Dibatalkan' => 'Dibatalkan',
                             ];
                             $statusColors = [
-                                'pending' => 'bg-yellow-100 text-yellow-700',
-                                'berjalan' => 'bg-blue-100 text-blue-700',
-                                'selesai' => 'bg-green-100 text-green-700',
-                                'tertunda' => 'bg-red-100 text-red-700',
+                                'Pending' => 'bg-yellow-100 text-yellow-700',
+                                'Menunggu' => 'bg-yellow-100 text-yellow-700',
+                                'Proses Desain' => 'bg-orange-100 text-orange-700',
+                                'Desain Disetujui' => 'bg-blue-100 text-blue-700',
+                                'Diproses' => 'bg-blue-100 text-blue-700',
+                                'Produksi' => 'bg-blue-100 text-blue-700',
+                                'Selesai' => 'bg-green-100 text-green-700',
+                                'Dibatalkan' => 'bg-red-100 text-red-700',
                             ];
+                            $statusDisplay = $jadwal->nama_status ?? 'Unknown';
                         @endphp
-                        <span class="inline-flex items-center rounded-full {{ $statusColors[$jadwal->status_produksi] ?? 'bg-slate-100 text-slate-700' }} px-3 py-1 text-xs font-semibold">
-                            {{ $statusLabels[$jadwal->status_produksi] ?? $jadwal->status_produksi }}
+                        <span class="inline-flex items-center rounded-full {{ $statusColors[$statusDisplay] ?? 'bg-slate-100 text-slate-700' }} px-3 py-1 text-xs font-semibold">
+                            {{ $statusLabels[$statusDisplay] ?? $statusDisplay }}
                         </span>
                     </div>
                 </div>

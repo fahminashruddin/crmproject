@@ -73,17 +73,23 @@
                             
                             {{-- Logic Badge Status Warna-warni --}}
                             @php
-                                $status = $item->status_produksi ?? 'pending';
+                                $status = $item->status_produksi ?? 'Pending';
                                 $badgeClass = match($status) {
-                                    'pending' => 'bg-gray-100 text-gray-800',     // Abu-abu
-                                    'in-progress' => 'bg-blue-100 text-blue-800', // Biru
-                                    'completed' => 'bg-green-100 text-green-800', // Hijau
+                                    'Pending', 'Menunggu' => 'bg-yellow-100 text-yellow-800',
+                                    'Proses Desain' => 'bg-orange-100 text-orange-800',
+                                    'Desain Disetujui' => 'bg-blue-100 text-blue-800',
+                                    'Diproses', 'Produksi' => 'bg-blue-100 text-blue-800',
+                                    'Selesai' => 'bg-green-100 text-green-800',
+                                    'Dibatalkan' => 'bg-red-100 text-red-800',
                                     default => 'bg-gray-100 text-gray-800',
                                 };
                                 $statusLabel = match($status) {
-                                    'pending' => 'Menunggu Produksi',
-                                    'in-progress' => 'Sedang Diproduksi',
-                                    'completed' => 'Selesai',
+                                    'Pending', 'Menunggu' => 'Menunggu Produksi',
+                                    'Proses Desain' => 'Proses Desain',
+                                    'Desain Disetujui' => 'Desain Disetujui',
+                                    'Diproses', 'Produksi' => 'Sedang Diproduksi',
+                                    'Selesai' => 'Selesai',
+                                    'Dibatalkan' => 'Dibatalkan',
                                     default => ucfirst($status),
                                 };
                             @endphp

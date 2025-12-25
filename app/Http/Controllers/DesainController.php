@@ -152,14 +152,16 @@ class DesainController extends Controller
      */
     public function jadwalProduksi(Request $request)
     {
-        // Ambil data jadwal produksi dari tabel produksis
+        // Ambil data jadwal produksi dari tabel produksis dengan join ke status_pesanans
         $jadwals = DB::table('produksis')
             ->leftJoin('pesanans', 'produksis.pesanan_id', '=', 'pesanans.id')
             ->leftJoin('pelanggans', 'pesanans.pelanggan_id', '=', 'pelanggans.id')
+            ->leftJoin('status_pesanans', 'pesanans.status_pesanan_id', '=', 'status_pesanans.id')
             ->select(
                 'produksis.*',
                 'pesanans.id as pesanan_id_val',
-                'pelanggans.nama as pelanggan_nama'
+                'pelanggans.nama as pelanggan_nama',
+                'status_pesanans.nama_status'
             )
             ->orderBy('produksis.tanggal_mulai', 'asc')
             ->paginate(10);
@@ -182,7 +184,6 @@ class DesainController extends Controller
             'pesanan_id' => 'required|exists:pesanans,id',
             'tanggal_mulai' => 'required|date',
             'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
-            'status_produksi' => 'required|in:pending,berjalan,selesai,tertunda',
             'catatan' => 'nullable|string',
         ]);
 
@@ -190,7 +191,6 @@ class DesainController extends Controller
             'pesanan_id' => $validated['pesanan_id'],
             'tanggal_mulai' => $validated['tanggal_mulai'],
             'tanggal_selesai' => $validated['tanggal_selesai'],
-            'status_produksi' => $validated['status_produksi'],
             'catatan' => $validated['catatan'] ?? null,
             'created_at' => now(),
             'updated_at' => now(),

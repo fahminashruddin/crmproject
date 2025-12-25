@@ -87,21 +87,6 @@
                     @enderror
                 </div>
 
-                {{-- Status Produksi --}}
-                <div>
-                    <label class="block text-sm font-medium text-slate-900 mb-2">Status</label>
-                    <select name="status_produksi" required 
-                        class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900">
-                        <option value="pending">Pending</option>
-                        <option value="berjalan">Berjalan</option>
-                        <option value="selesai">Selesai</option>
-                        <option value="tertunda">Tertunda</option>
-                    </select>
-                    @error('status_produksi')
-                    <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
                 {{-- Catatan --}}
                 <div>
                     <label class="block text-sm font-medium text-slate-900 mb-2">Catatan (Opsional)</label>
@@ -149,21 +134,31 @@
                     </td>
                     <td class="px-6 py-3 text-sm">
                         @php
-                            $statusColors = [
-                                'pending' => 'bg-yellow-100 text-yellow-700',
-                                'berjalan' => 'bg-blue-100 text-blue-700',
-                                'selesai' => 'bg-green-100 text-green-700',
-                                'tertunda' => 'bg-red-100 text-red-700',
-                            ];
+                            // Mapping status dari pesanans.status_pesanan_id
                             $statusLabels = [
-                                'pending' => 'Pending',
-                                'berjalan' => 'Berjalan',
-                                'selesai' => 'Selesai',
-                                'tertunda' => 'Tertunda',
+                                'Pending' => 'Pending',
+                                'Menunggu' => 'Menunggu',
+                                'Proses Desain' => 'Proses Desain',
+                                'Desain Disetujui' => 'Desain Disetujui',
+                                'Diproses' => 'Sedang Diproduksi',
+                                'Produksi' => 'Sedang Diproduksi',
+                                'Selesai' => 'Selesai',
+                                'Dibatalkan' => 'Dibatalkan',
                             ];
+                            $statusColors = [
+                                'Pending' => 'bg-yellow-100 text-yellow-700',
+                                'Menunggu' => 'bg-yellow-100 text-yellow-700',
+                                'Proses Desain' => 'bg-orange-100 text-orange-700',
+                                'Desain Disetujui' => 'bg-blue-100 text-blue-700',
+                                'Diproses' => 'bg-blue-100 text-blue-700',
+                                'Produksi' => 'bg-blue-100 text-blue-700',
+                                'Selesai' => 'bg-green-100 text-green-700',
+                                'Dibatalkan' => 'bg-red-100 text-red-700',
+                            ];
+                            $statusDisplay = $jadwal->nama_status ?? 'Unknown';
                         @endphp
-                        <span class="inline-flex items-center rounded-full {{ $statusColors[$jadwal->status_produksi] ?? 'bg-slate-100 text-slate-700' }} px-3 py-1 text-sm font-medium">
-                            {{ $statusLabels[$jadwal->status_produksi] ?? $jadwal->status_produksi }}
+                        <span class="inline-flex items-center rounded-full {{ $statusColors[$statusDisplay] ?? 'bg-slate-100 text-slate-700' }} px-3 py-1 text-sm font-medium">
+                            {{ $statusLabels[$statusDisplay] ?? $statusDisplay }}
                         </span>
                     </td>
                 </tr>
