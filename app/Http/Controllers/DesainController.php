@@ -93,32 +93,36 @@ class DesainController extends Controller
      * Halaman utama kelola desain
      * (Data dummy untuk tabel)
      */
-  public function kelolaDesain()
+ public function kelolaDesain()
 {
+    // 1. Ambil SEMUA data desain (Tanpa filter != 4) untuk hitungan Card Statistik
+    $allDesigns = DB::table('desains')
+        ->leftJoin('status_desains', 'desains.status_desain_id', '=', 'status_desains.id')
+        ->select('status_desains.nama_status as status_desain')
+        ->get();
+
+    // 2. Ambil data untuk LIST ANTRIAN (Hanya yang belum disetujui/selesai)
     $designs = DB::table('desains')
         ->leftJoin('pesanans', 'desains.pesanan_id', '=', 'pesanans.id')
         ->leftJoin('pelanggans', 'pesanans.pelanggan_id', '=', 'pelanggans.id')
         ->leftJoin('status_desains', 'desains.status_desain_id', '=', 'status_desains.id')
         ->leftJoin('detail_pesanans', 'pesanans.id', '=', 'detail_pesanans.pesanan_id')
+        ->where('desains.status_desain_id', '!=', 4) // Antrian tidak menampilkan ID 4
         ->select(
             DB::raw("CONCAT('ORD-', LPAD(pesanans.id, 3, '0')) as nomor_order"),
             'pelanggans.nama as pelanggan',
             'pesanans.tanggal_pesanan as tanggal_order',
             'status_desains.nama_status as status_desain',
-
-            // dari detail_pesanans (yang PASTI ADA)
             'detail_pesanans.jenis_layanan_id',
             'detail_pesanans.jumlah',
-            'detail_pesanans.harga_satuan',
-            'detail_pesanans.subtotal',
-
             'desains.catatan_revisi as catatan_desain',
             'desains.created_at'
         )
         ->orderBy('desains.created_at', 'desc')
         ->get();
 
-    return view('desain.designs', compact('designs'));
+    // Kirim kedua variabel ke View
+    return view('desain.designs', compact('designs', 'allDesigns'));
 }
 
 
@@ -162,31 +166,80 @@ class DesainController extends Controller
         // Namun, jika Anda menggunakan view 'desain.desain' dari diskusi sebelumnya, ganti 'desain.template' menjadi 'desain.desain'.
         return view('desain.template', compact('templates'));
     }
-    public function setujui(Request $request)
+ public function setujui(Request $request)
 {
     $request->validate([
-        'pesanan_id' => 'required|exists:pesanans,id'
+        'nomor_order' => 'required',
     ]);
 
-    // Ambil ID status "disetujui" (aman dari perbedaan huruf)
-    $statusDisetujui = DB::table('status_desains')
-        ->whereRaw('LOWER(nama_status) = ?', ['disetujui'])
+    $pesananId = DB::table('pesanans')
+        ->whereRaw(
+            "CONCAT('ORD-', LPAD(id, 3, '0')) = ?",
+            [$request->nomor_order]
+        )
         ->value('id');
 
-    if (!$statusDisetujui) {
-        return redirect()->back()
-            ->with('error', 'Status Disetujui tidak ditemukan di tabel status_desains');
+    if (!$pesananId) {
+        return back()->with('error', 'Pesanan tidak ditemukan');
     }
 
     DB::table('desains')
-        ->where('pesanan_id', $request->pesanan_id)
+        ->where('pesanan_id', $pesananId)
         ->update([
-            'status_desain_id' => $statusDisetujui,
-            'updated_at'       => now(),
+            'status_desain_id' => 4, // ID Disetujui
+            'updated_at' => now(),
         ]);
 
-    return redirect()->back()->with('success', 'Desain berhasil disetujui');
+    return back()->with('success', 'Desain berhasil disetujui');
 }
+
+public function upload(Request $request)
+{
+    // 1. Validasi Input
+    $request->validate([
+        'nomor_order' => 'required',
+        'file_desain' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+    ]);
+
+    // 2. Ambil ID pesanan berdasarkan format ORD-xxx
+    // Pastikan ID yang diambil benar-benar integer
+    $pesananId = DB::table('pesanans')
+        ->whereRaw("CONCAT('ORD-', LPAD(id, 3, '0')) = ?", [$request->nomor_order])
+        ->value('id');
+
+    if (!$pesananId) {
+        return back()->with('error', 'ID Pesanan ' . $request->nomor_order . ' tidak ditemukan!');
+    }
+
+    // 3. Handle File Upload
+    if ($request->hasFile('file_desain')) {
+        $file = $request->file('file_desain');
+        $fileName = 'desain_' . $pesananId . '_' . time() . '.' . $file->getClientOriginalExtension();
+        $path = $file->storeAs('desain', $fileName, 'public');
+
+        // 4. Ambil Status "Menunggu" dari tabel status_desains
+        $statusMenunggu = DB::table('status_desains')
+            ->whereRaw('LOWER(nama_status) = ?', ['menunggu'])
+            ->value('id') ?? 1;
+
+        // 5. UPDATE atau INSERT ke tabel desains
+        // Kita gunakan updateOrInsert agar jika data belum ada, dia akan CREATE.
+        DB::table('desains')->updateOrInsert(
+            ['pesanan_id' => $pesananId], // Kunci pencarian
+            [
+                'status_desain_id' => $statusMenunggu,
+                'file_desain_path' => $path, // <--- Ini yang krusial
+                'updated_at'       => now(),
+                'created_at'       => DB::raw('IFNULL(created_at, NOW())') 
+            ]
+        );
+
+        return back()->with('success', 'File desain berhasil diupload untuk ' . $request->nomor_order);
+    }
+
+    return back()->with('error', 'Gagal memproses file.');
+}
+
 
 
 

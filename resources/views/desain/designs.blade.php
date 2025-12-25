@@ -5,12 +5,12 @@
 @section('content')
 
 @php
-$designs = $designs ?? collect([]);
-$designCollection = collect($designs);
-
-$inProgress = $designCollection->where('status_desain', 'Menunggu')->count();
-$revisi     = $designCollection->where('status_desain', 'Revisi')->count();
-$done       = $designCollection->where('status_desain', 'Disetujui')->count();
+    // Hitung statistik dari SEMUA data (allDesigns)
+    $allDesigns = collect($allDesigns ?? []);
+    
+    $inProgress = $allDesigns->filter(fn($item) => strtolower($item->status_desain ?? '') == 'menunggu')->count();
+    $revisi     = $allDesigns->filter(fn($item) => strtolower($item->status_desain ?? '') == 'revisi')->count();
+    $done       = $allDesigns->filter(fn($item) => strtolower($item->status_desain ?? '') == 'disetujui')->count();
 @endphp
 
 <div class="mb-6">
@@ -73,9 +73,16 @@ $done       = $designCollection->where('status_desain', 'Disetujui')->count();
                     </button>
 
                     {{-- SETUJUI (TETAP) --}}
-                    <button class="rounded-md bg-slate-900 px-4 py-2 text-sm text-white">
-                        Setujui Desain
-                    </button>
+                   <form action="{{ route('desain.setujui') }}" method="POST">
+    @csrf
+    <input type="hidden" name="nomor_order" value="{{ $design->nomor_order }}">
+
+    <button
+        type="submit"
+        class="rounded-md bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-800">
+        Setujui Desain
+    </button>
+</form>
 
                     {{-- ✅ REVISI (BARU) --}}
                     <button

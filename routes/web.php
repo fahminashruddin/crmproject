@@ -115,11 +115,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/revisions', [DesainController::class, 'revisions'])->name('desain.revisions');
     Route::get('/riwayat', [DesainController::class, 'riwayat'])->name('desain.riwayat');
     Route::get('/template', [DesainController::class, 'pengaturan'])->name('desain.template');
-    Route::post('/desain/upload', [DesainController::class, 'upload'])->name('desain.upload');
-    Route::post('/desain/desain/revisi', [DesainController::class, 'revisi'])
-    ->name('desain.revisi');
-    Route::post('/desain/setujui', [DesainController::class, 'setujui'])
-    ->name('desain.setujui');
+    Route::post('/upload', [DesainController::class, 'upload'])->name('desain.upload');
+    Route::post('/revisi', [DesainController::class, 'revisi'])->name('desain.revisi');
+    Route::post('/setujui', [DesainController::class, 'setujui'])->name('desain.setujui');
     });
 
     // --- C. AREA PRODUKSI (LENGKAP DENGAN FITUR BARU) ---
