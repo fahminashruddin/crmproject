@@ -28,6 +28,7 @@ class DetailPesananSeeder extends Seeder
                 'jumlah'           => $jumlah,
                 'harga_satuan'     => $hargaSatuan,
                 'subtotal'         => $subtotal,
+                'spesifikasi'      => 'Spesifikasi produk dari seeder',
                 'created_at'       => Carbon::now(),
                 'updated_at'       => Carbon::now(),
             ]);

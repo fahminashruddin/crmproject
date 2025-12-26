@@ -16,11 +16,12 @@ class StatusPesananSeeder extends Seeder
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
         DB::table('status_pesanans')->insert([
-            ['id' => 1, 'nama_status' => 'Baru', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 1, 'nama_status' => 'Pending', 'created_at' => now(), 'updated_at' => now()],
             ['id' => 2, 'nama_status' => 'Proses Desain', 'created_at' => now(), 'updated_at' => now()],
-            ['id' => 3, 'nama_status' => 'Desain Disetujui', 'created_at' => now(), 'updated_at' => now()], // Penting untuk Produksi
-            ['id' => 4, 'nama_status' => 'Produksi', 'created_at' => now(), 'updated_at' => now()],        // Penting untuk Produksi
-            ['id' => 5, 'nama_status' => 'Selesai', 'created_at' => now(), 'updated_at' => now()],         // Penting untuk Produksi
+            ['id' => 3, 'nama_status' => 'Desain Disetujui', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 4, 'nama_status' => 'Diproses', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 5, 'nama_status' => 'Produksi', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 6, 'nama_status' => 'Selesai', 'created_at' => now(), 'updated_at' => now()],
         ]);
     }
 }
