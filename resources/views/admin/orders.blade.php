@@ -141,30 +141,30 @@
                         </div>
                         <div class="flex gap-2">
                             @php
-                                $status = strtolower($order->nama_status);
+                                $status = strtolower($order->statusPesanan->nama_status);
                                 $bgStatus = 'bg-gray-100 text-gray-700';
                                 if($status == 'selesai') $bgStatus = 'bg-green-100 text-green-800';
                                 elseif($status == 'produksi') $bgStatus = 'bg-blue-100 text-blue-800';
                                 elseif($status == 'desain') $bgStatus = 'bg-purple-100 text-purple-800';
                                 elseif($status == 'pending') $bgStatus = 'bg-yellow-100 text-yellow-800';
                             @endphp
-                            <span class="{{ $bgStatus }} px-3 py-1 rounded-full text-xs font-medium">{{ $order->nama_status }}</span>
+                            <span class="{{ $bgStatus }} px-3 py-1 rounded-full text-xs font-medium">{{ $order->statusPesanan->nama_status }}</span>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                         <div>
                             <p class="text-sm font-semibold text-gray-900 mb-1">Pelanggan:</p>
-                            <p class="text-sm font-medium">{{ $order->pelanggan_nama }}</p>
+                            <p class="text-sm font-medium">{{ $order->pelanggan->nama ?? 'Pelanggan Umum' }}</p>
                         </div>
                         <div>
                             <p class="text-sm font-semibold text-gray-900 mb-1">Layanan:</p>
-                            <p class="text-sm font-medium">{{ $order->jenis_layanan ?? '-' }}</p>
-                            <p class="text-sm text-gray-500">{{ $order->jumlah_pesanan ?? 0 }} pcs</p>
+                            <p class="text-sm font-medium">{{ $order->detailPesanans->first()?->jenisLayanan->nama_layanan ?? '-' }}</p>
+                            <p class="text-sm text-gray-500">{{ $order->detailPesanans->sum('jumlah') }} pcs</p>
                         </div>
                         <div>
                             <p class="text-sm font-semibold text-gray-900 mb-1">Total:</p>
-                            <p class="text-xl font-bold">Rp {{ number_format($order->total_harga ?? 0, 0, ',', '.') }}</p>
+                            <p class="text-xl font-bold">Rp {{ number_format($order->detailPesanans->sum(fn($d) => $d->jumlah * $d->harga_satuan), 0, ',', '.') }}</p>
                         </div>
                     </div>
 
@@ -174,7 +174,7 @@
                     </div>
 
                     <div class="pt-4 border-t border-gray-100">
-                        <form action="{{ route('admin.orders.update', $order->id) }}" method="POST" class="inline-block">
+                        <form action="{{ route('admin.orders.updateStatus', $order->id) }}" method="POST" class="inline-block">
                             @csrf @method('PATCH')
                             <div class="relative group">
                                 <select name="status_id" onchange="this.form.submit()"

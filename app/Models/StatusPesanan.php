@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Models\Pesanans;
+namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use app\Models\Pesanans\Pesanan;
+use app\Models\Pesanan;
 
 class StatusPesanan extends Model
 {

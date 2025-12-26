@@ -116,7 +116,7 @@
                         </span>
 
                         <span class="inline-flex items-center px-4 py-1 rounded-full text-xs font-bold border border-gray-200 text-slate-700 bg-white capitalize">
-                            {{ $user->nama_role }}
+                            {{ $user->role->nama_role }}
                         </span>
 
                         <button class="px-4 py-1.5 text-xs font-medium text-slate-700 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition">
@@ -156,7 +156,7 @@
                 <div class="p-5 border border-gray-200 rounded-xl hover:shadow-md transition-shadow bg-white relative">
 
                     <span class="absolute top-4 right-4 px-2 py-1 text-[10px] font-bold border border-gray-200 rounded-full text-slate-600 bg-white uppercase tracking-wide">
-                        {{ $user->nama_role }}
+                        {{ $user->role->nama_role }}
                     </span>
 
                     <div class="mb-3 pr-16"> <h3 class="font-bold text-slate-900">{{ $user->name }}</h3>

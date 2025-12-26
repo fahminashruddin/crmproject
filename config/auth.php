@@ -63,7 +63,7 @@ return [
         'users' => [
             'driver' => 'eloquent',
             // Default model changed to Pengguna (table: penggunas)
-            'model' => env('AUTH_MODEL', App\Models\Pengguna::class),
+            'model' => App\Models\Pengguna::class,
         ],
 
         // 'users' => [
