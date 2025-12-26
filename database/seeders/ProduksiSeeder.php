@@ -47,7 +47,7 @@ class ProduksiSeeder extends Seeder
 
             // Tentukan apakah produksi sudah selesai atau belum (50:50 chance)
             $isCompleted = (bool)rand(0, 1);
-            $tanggalSelesai = $isCompleted 
+            $tanggalSelesai = $isCompleted
                 ? $tanggalMulai->copy()->addDays(rand(3, 10))
                 : $tanggalMulai->copy()->addDays(rand(5, 14));
 
@@ -58,7 +58,6 @@ class ProduksiSeeder extends Seeder
                 'pesanan_id' => $pesananId,
                 'tanggal_mulai' => $tanggalMulai,
                 'tanggal_selesai' => $tanggalSelesai,
-                'status_produksi' => $status,
                 'catatan' => $catatanList[array_rand($catatanList)],
                 'created_at' => $tanggalMulai,
                 'updated_at' => now(),
@@ -85,25 +84,5 @@ class ProduksiSeeder extends Seeder
         }
 
         $this->command->info('ProduksiSeeder berhasil dijalankan!');
-    }
-}
-
-            $tanggalSelesai = null;
-
-            if ($isCompleted) {
-                // Jika selesai, tanggal selesai = tanggal mulai + durasi pengerjaan (1-7 hari)
-                $tanggalSelesai = (clone $tanggalMulai)->addDays(rand(1, 7));
-            }
-
-            // Insert ke database
-            DB::table('produksis')->insert([
-                'pesanan_id'      => $pesananId,
-                'tanggal_mulai'   => $tanggalMulai->toDateString(), // Format Y-m-d
-                'tanggal_selesai' => $tanggalSelesai ? $tanggalSelesai->toDateString() : null,
-                'catatan'         => $catatanList[array_rand($catatanList)],
-                'created_at'      => now(),
-                'updated_at'      => now(),
-            ]);
-        }
     }
 }
