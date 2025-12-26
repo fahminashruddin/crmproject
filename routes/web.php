@@ -93,7 +93,9 @@ Route::middleware(['auth'])->group(function () {
         // Route::patch('users/{id}/toggle', [UserController::class, 'toggleUserStatus'])->name('users.toggle');
 
         Route::get('settings', [AdminController::class, 'settings'])->name('settings');
-        Route::get('notifications', [AdminController::class, 'notifications'])->name('notifications');
+
+        Route::get('/notifications', [AdminController::class, 'notifications'])->name('notifications');
+        Route::post('/notifications/read', [AdminController::class, 'markNotificationsAsRead'])->name('notifications.read');
     });
 
     // --- B. AREA DESAIN ---

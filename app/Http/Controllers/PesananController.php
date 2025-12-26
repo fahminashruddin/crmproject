@@ -10,6 +10,9 @@ use App\Models\Pelanggan;
 use App\Models\DetailPesanan;
 use App\Models\StatusPesanan;
 use App\Models\JenisLayanan;
+use App\Notifications\PesananBaruNotification;
+use App\Models\Pengguna;
+use Illuminate\Support\Facades\Notification;
 
 class PesananController extends Controller
 {
@@ -174,10 +177,20 @@ class PesananController extends Controller
                 'jumlah'           => $request->jumlah,
                 'harga_satuan'     => $hargaSatuan,
             ]);
-
-            // (Opsional) Hitung total jika mau disimpan di log atau field lain
-            // $this->calculateTotal($pesanan->id);
         });
+
+        // 1. Ambil data pesanan terakhir (atau return object pesanan dari transaction)
+        $pesananBaru = Pesanan::with('pelanggan')->latest()->first();
+
+        // 2. Cari Siapa yang harus dikirimi notifikasi? (Semua Admin)
+        $admins = Pengguna::whereHas('role', function($q) {
+            $q->where('nama_role', 'admin');
+        })->get();
+
+        // 3. Kirim Notifikasi
+        if ($pesananBaru) {
+            Notification::send($admins, new PesananBaruNotification($pesananBaru));
+        }
 
         return redirect()->back()->with('success', 'Pesanan baru berhasil ditambahkan!');
     }

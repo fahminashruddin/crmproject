@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Pembayaran;        // Gunakan Model
-use App\Models\MetodePembayaran;  // Gunakan Model
-use App\Models\StatusPesanan;     // (Opsional) Jika kamu memindahkan model ini juga
-use Illuminate\Support\Facades\DB; // Hanya dipakai jika butuh query manual khusus
+use App\Models\Pembayaran;
+use App\Models\MetodePembayaran;
+use App\Models\StatusPesanan;
+use Illuminate\Support\Facades\DB;
+use App\Notifications\PembayaranTerverifikasiNotification;
+use App\Models\Pengguna;
+use Illuminate\Support\Facades\Notification;
 
 class PembayaranController extends Controller
 {
@@ -35,6 +38,9 @@ class PembayaranController extends Controller
             'status' => 'verifikasi',
             'metode_pembayaran_id' => $metode->id,
         ]);
+
+        $admins = Pengguna::whereHas('role', fn($q) => $q->where('nama_role', 'admin'))->get();
+        Notification::send($admins, new PembayaranTerverifikasiNotification($pembayaran));
 
         // 4. Update Status Pesanan (Menggunakan Relasi)
         // Cek apakah pembayaran punya pesanan

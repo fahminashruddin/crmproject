@@ -3,9 +3,10 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Pesanan;      
+use App\Models\Pesanan;
 use App\Models\Pembayaran;
 use App\Models\Pengguna;
+use Illuminate\Support\Facades\Auth;
 
 class AdminController extends Controller
 {
@@ -59,26 +60,28 @@ class AdminController extends Controller
 
     public function notifications()
     {
-        // Jika nanti mau ambil dari DB: $notifications = auth()->user()->notifications;
-        $notifications = [
-            (object)[
-                'id' => 1,
-                'type' => 'order',
-                'title' => 'Pesanan baru masuk',
-                'message' => 'ORD-003 dari CV. Sukses Mandiri',
-                'is_read' => false,
-                'created_at' => now()->subMinutes(5),
-            ],
-            (object)[
-                'id' => 2,
-                'type' => 'payment',
-                'title' => 'Pembayaran terverifikasi',
-                'message' => 'ORD-001 pembayaran Rp 750.000',
-                'is_read' => true,
-                'created_at' => now()->subHour(),
-            ],
-        ];
+
+        // Ambil user yang sedang login
+        $user = Auth::user();
+
+        // Ambil semua notifikasi (Laravel otomatis mengurutkan created_at desc)
+        if ($user) {
+            $notifications = $user->notifications;
+        } else {
+            $notifications = collect(); // Koleksi kosong jika tidak ada user (safety)
+        }
 
         return view('admin.notifications', compact('notifications'));
+    }
+
+    public function markNotificationsAsRead()
+    {
+        $user = Auth::user();
+
+        if ($user) {
+            $user->unreadNotifications->markAsRead();
+        }
+
+        return redirect()->back();
     }
 }
