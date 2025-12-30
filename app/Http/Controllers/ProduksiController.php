@@ -6,6 +6,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
+// --- IMPORT MODEL BARU ---
+use App\Models\Produksi;
+use App\Models\KendalaProduksi;
+use App\Models\Pesanan; // Pastikan Anda sudah membuat Model Pesanan
+
 class ProduksiController extends Controller
 {
     // === MIDDLEWARE ===
@@ -17,12 +22,12 @@ class ProduksiController extends Controller
         }
     }
 
-    // === 1. DASHBOARD UTAMA (Full Statistik & Antrian) ===
+    // === 1. DASHBOARD UTAMA ===
     public function dashboard()
     {
         $this->ensureProduksi();
 
-        // A. Hitung Statistik
+        // A. Hitung Statistik (Tetap menggunakan DB Query agar cepat)
         $stats = DB::table('pesanans')
             ->join('status_pesanans', 'pesanans.status_pesanan_id', '=', 'status_pesanans.id')
             ->select('status_pesanans.nama_status', DB::raw('count(*) as total'))
@@ -30,12 +35,11 @@ class ProduksiController extends Controller
             ->pluck('total', 'nama_status')
             ->toArray();
 
-        // Mapping Status
         $menunggu = ($stats['Pending'] ?? 0) + ($stats['Menunggu'] ?? 0) + ($stats['Desain Disetujui'] ?? 0); 
         $sedangProses = ($stats['Diproses'] ?? 0) + ($stats['Produksi'] ?? 0) + ($stats['Sedang Diproduksi'] ?? 0);
         $selesai = ($stats['Selesai'] ?? 0);
 
-        // B. Ambil 5 Antrian Teratas (Untuk Widget Dashboard)
+        // B. Ambil 5 Antrian Teratas
         $antrian = DB::table('pesanans')
             ->join('pelanggans', 'pesanans.pelanggan_id', '=', 'pelanggans.id')
             ->join('status_pesanans', 'pesanans.status_pesanan_id', '=', 'status_pesanans.id')
@@ -50,7 +54,6 @@ class ProduksiController extends Controller
             ->limit(5)
             ->get();
 
-        // Inject detail (Layanan/Spesifikasi)
         foreach ($antrian as $item) {
             $detail = DB::table('detail_pesanans')
                 ->join('jenis_layanans', 'detail_pesanans.jenis_layanan_id', '=', 'jenis_layanans.id')
@@ -66,8 +69,7 @@ class ProduksiController extends Controller
         return view('produksi.dashboard', compact('menunggu', 'sedangProses', 'selesai', 'antrian'));
     }
 
-    // === 2. HALAMAN DAFTAR SEMUA PRODUKSI (Clean UI) ===
-  // === 2. HALAMAN DAFTAR SEMUA PRODUKSI ===
+    // === 2. HALAMAN DAFTAR SEMUA PRODUKSI (MERGED) ===
     public function productions(Request $request)
     {
         $this->ensureProduksi();
@@ -84,39 +86,30 @@ class ProduksiController extends Controller
         $sedangProses = ($stats['Diproses'] ?? 0) + ($stats['Produksi'] ?? 0) + ($stats['Sedang Diproduksi'] ?? 0);
         $selesai = ($stats['Selesai'] ?? 0);
 
-        // 2. Query Utama
-        $query = DB::table('pesanans')
-            ->join('pelanggans', 'pesanans.pelanggan_id', '=', 'pelanggans.id')
-            ->join('status_pesanans', 'pesanans.status_pesanan_id', '=', 'status_pesanans.id')
-            ->leftJoin('desains', 'pesanans.id', '=', 'desains.pesanan_id') 
-            ->select(
-                'pesanans.id',
-                'pesanans.tanggal_pesanan',
-                'pelanggans.nama as nama_pelanggan',
-                'status_pesanans.nama_status as status_produksi',
-                'desains.file_desain_path'
-            );
+        // 2. Query Utama (MENGGUNAKAN ELOQUENT SESUAI REQUEST ANDA)
+        // Pastikan Model Pesanan memiliki relasi: pelanggan(), status(), desain(), detail()
+        $productions = Pesanan::with(['pelanggan', 'status', 'desain', 'detail.jenisLayanan'])
+            ->when($request->search, function($q) use ($request) {
+                $q->whereHas('pelanggan', function($sub) use ($request) {
+                    $sub->where('nama', 'like', "%{$request->search}%");
+                })->orWhere('id', 'like', "%{$request->search}%");
+            })
+            ->orderBy('updated_at', 'desc')
+            ->paginate(10);
 
-        if ($request->has('search') && $request->search != '') {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('pelanggans.nama', 'like', "%{$search}%")
-                  ->orWhere('pesanans.id', 'like', "%{$search}%");
-            });
-        }
-
-        $productions = $query->orderBy('pesanans.updated_at', 'desc')->paginate(10);
-
-        // 3. Inject Detail & Logika Tampilan (PINDAH KE SINI AGAR BLADE BERSIH)
+        // 3. Inject Detail & Logika Tampilan
+        // Kita sesuaikan data object Eloquent agar tetap terbaca oleh View lama Anda
         foreach ($productions as $item) {
-            $detail = DB::table('detail_pesanans')
-                ->join('jenis_layanans', 'detail_pesanans.jenis_layanan_id', '=', 'jenis_layanans.id')
-                ->where('detail_pesanans.pesanan_id', $item->id)
-                ->select('detail_pesanans.jumlah', 'detail_pesanans.spesifikasi', 'jenis_layanans.nama_layanan')
-                ->first();
-
+            // Mapping Data Relasi ke properti flat (agar view tidak error)
+            $item->nama_pelanggan = $item->pelanggan->nama ?? '-';
+            $item->status_produksi = $item->status->nama_status ?? '-';
+            $item->file_desain_path = $item->desain->file_desain_path ?? null;
+            
+            // Ambil detail pertama (asumsi satu pesanan satu detail utama)
+            $detail = $item->detail->first(); 
+            
             $item->jumlah = $detail ? $detail->jumlah : 0;
-            $item->layanan = $detail ? $detail->nama_layanan : '-';
+            $item->layanan = ($detail && $detail->jenisLayanan) ? $detail->jenisLayanan->nama_layanan : '-';
             $item->spesifikasi = $detail ? $detail->spesifikasi : '-';
             $item->nama_file_desain = $item->file_desain_path ? basename($item->file_desain_path) : 'Tidak ada file';
 
@@ -165,7 +158,7 @@ class ProduksiController extends Controller
         return redirect()->back()->with('error', 'Status "Selesai" tidak ditemukan di database.');
     }
 
-    // === 5. SIMPAN KENDALA (Fix Produksi ID) ===
+    // === 5. SIMPAN KENDALA (MERGED - MENGGUNAKAN MODEL) ===
     public function storeIssue(Request $request)
     {
         $this->ensureProduksi();
@@ -175,32 +168,25 @@ class ProduksiController extends Controller
             'deskripsi' => 'required|string',
         ]);
 
-        // Cari ID Produksi
-        $produksi = DB::table('produksis')->where('pesanan_id', $request->pesanan_id)->first();
+        // 1. Cek atau Buat data di tabel 'Produksi' (Sesuai ERD)
+        // Ini otomatis mengecek: jika pesanan_id ini belum ada di tabel produksi, dia buat baru.
+        // Jika sudah ada, dia ambil datanya.
+        $produksi = Produksi::firstOrCreate(
+            ['pesanan_id' => $request->pesanan_id],
+            ['tanggal_mulai' => now()] // Data tambahan jika baru dibuat
+        );
 
-        if (!$produksi) {
-            $produksiId = DB::table('produksis')->insertGetId([
-                'pesanan_id' => $request->pesanan_id,
-                'tanggal_mulai' => now(),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        } else {
-            $produksiId = $produksi->id;
-        }
-
-        DB::table('kendala_produksis')->insert([
-            'produksi_id' => $produksiId, 
-            'deskripsi_kendala' => $request->deskripsi, // Sesuai DB
+        // 2. Simpan Kendala lewat Relasi (Sesuai garis hubungan di ERD)
+        // Laravel otomatis mengisi 'produksi_id' berdasarkan relasi
+        $produksi->kendala()->create([
+            'deskripsi_kendala' => $request->deskripsi,
             'waktu_terjadi' => now(),
-            'created_at' => now(),
-            'updated_at' => now(),
         ]);
 
         return redirect()->back()->with('success', 'Laporan kendala berhasil dikirim.');
     }
 
-    // === 6. PRINT JOB SHEET (Fix Telepon) ===
+    // === 6. PRINT JOB SHEET ===
     public function printJobSheet($id)
     {
         $this->ensureProduksi();
@@ -211,7 +197,7 @@ class ProduksiController extends Controller
             ->select(
                 'pesanans.*', 
                 'pelanggans.nama as nama_pelanggan', 
-                'pelanggans.telepon', // Menggunakan kolom 'telepon' sesuai DB
+                'pelanggans.telepon', 
                 'pelanggans.alamat', 
                 'status_pesanans.nama_status as status_produksi', 
                 'desains.file_desain_path'
@@ -233,12 +219,11 @@ class ProduksiController extends Controller
         return view('produksi.print_job_sheet', compact('item'));
     }
     
-    // === 7. HALAMAN JADWAL PRODUKSI (VIEW ONLY) ===
+    // === 7. HALAMAN JADWAL PRODUKSI ===
     public function jadwalProduksi(Request $request)
     {
         $this->ensureProduksi();
         
-        // Ambil data jadwal produksi dari tabel produksis dengan join ke pesanans dan status_pesanans
         $jadwals = DB::table('produksis')
             ->leftJoin('pesanans', 'produksis.pesanan_id', '=', 'pesanans.id')
             ->leftJoin('pelanggans', 'pesanans.pelanggan_id', '=', 'pelanggans.id')
@@ -255,18 +240,16 @@ class ProduksiController extends Controller
         return view('produksi.jadwal-produksi', compact('jadwals'));
     }
 
-    // === 8. HALAMAN INVENTORY (VIEW ONLY) ===
+    // === 8. HALAMAN INVENTORY ===
     public function inventory(Request $request)
     {
         $this->ensureProduksi();
         
         try {
-            // Ambil data inventory/stok dari database
             $inventorys = DB::table('inventorys')
                 ->orderBy('inventorys.created_at', 'desc')
                 ->paginate(10);
         } catch (\Exception $e) {
-            // Fallback jika tabel belum ada - return empty paginator
             $inventorys = new \Illuminate\Pagination\Paginator([], 10, 1, []);
         }
 
@@ -277,7 +260,6 @@ class ProduksiController extends Controller
     public function issues() 
     { 
         $this->ensureProduksi();
-        // Placeholder query, sesuaikan jika ingin menampilkan list kendala
         $issues = DB::table('kendala_produksis')->orderBy('created_at', 'desc')->paginate(10);
         return view('produksi.issues', compact('issues')); 
     }

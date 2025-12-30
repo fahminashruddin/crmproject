@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+
 class JenisLayanan extends Model
 {
     use HasFactory;
@@ -15,9 +16,4 @@ class JenisLayanan extends Model
         'deskripsi',
         'harga_dasar',
     ];
-
-    public function detailPesanans()
-    {
-        return $this->hasMany(DetailPesanan::class);
-    }
 }

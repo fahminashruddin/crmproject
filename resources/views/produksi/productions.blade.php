@@ -55,12 +55,14 @@
                 <h3 class="text-2xl font-bold text-black">Data Produksi</h3>
                 <p class="text-slate-500 text-sm mt-1">Total {{ $productions->total() }} pesanan</p>
             </div>
+            {{-- Form Search --}}
             <form action="{{ url('/produksi/productions') }}" method="GET" class="relative w-full md:w-72">
                 <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari pesanan..." class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black">
                 <svg class="absolute left-3 top-2.5 h-4 w-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             </form>
         </div>
 
+        {{-- Alert Success --}}
         @if(session('success'))
             <div class="mb-6 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -68,25 +70,33 @@
             </div>
         @endif
 
+        {{-- Error handling jika ada --}}
+        @if(session('error'))
+            <div class="mb-6 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
+                 {{ session('error') }}
+            </div>
+        @endif
+
         <div class="space-y-6">
             @forelse($productions as $item)
             <div class="border border-slate-200 rounded-lg p-6 hover:shadow-md transition-shadow">
                 
-                {{-- Header --}}
+                {{-- Item Header --}}
                 <div class="flex flex-col md:flex-row justify-between items-start mb-4">
                     <div class="mb-2 md:mb-0">
                         <h4 class="text-xl font-bold text-black">ORD-{{ str_pad($item->id, 3, '0', STR_PAD_LEFT) }}</h4>
+                        {{-- Menggunakan variabel flat dari Controller --}}
                         <p class="text-slate-500 text-sm font-medium">{{ $item->nama_pelanggan }}</p>
                         <p class="text-slate-400 text-xs mt-1">{{ \Carbon\Carbon::parse($item->tanggal_pesanan)->format('Y-m-d') }}</p>
                     </div>
                     
-                    {{-- Badge Status (Ambil dari Controller, tidak ada PHP di sini lagi) --}}
+                    {{-- Badge Status --}}
                     <span class="{{ $item->warna_badge }} text-white text-xs font-bold px-4 py-1.5 rounded-full self-start">
                         {{ $item->label_status }}
                     </span>
                 </div>
 
-                {{-- Detail --}}
+                {{-- Item Detail --}}
                 <div class="space-y-2 mb-6 text-sm text-slate-800">
                     <div class="flex flex-col sm:flex-row">
                         <span class="font-bold w-40 shrink-0 text-slate-900">Layanan:</span>
@@ -108,6 +118,7 @@
 
                 {{-- Tombol Aksi --}}
                 <div class="flex flex-wrap gap-3 mt-4">
+                    {{-- Logika tombol berdasarkan status --}}
                     @if(in_array($item->status_produksi, ['Diproses', 'Produksi', 'Sedang Diproduksi']))
                         <form action="{{ route('produksi.productions.complete', $item->id) }}" method="POST">
                             @csrf
@@ -116,10 +127,12 @@
                                 Selesai Produksi
                             </button>
                         </form>
-                        <button onclick="openModal({{ $item->id }})" class="bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 text-sm font-bold px-5 py-2.5 rounded-md flex items-center gap-2 transition">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                        
+                        {{-- Tombol Lapor Kendala --}}
+<button onclick="openModal('{{ $item->id }}')" class="bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 text-sm font-bold px-5 py-2.5 rounded-md flex items-center gap-2 transition">                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                             Laporkan Kendala
                         </button>
+
                     @elseif(in_array($item->status_produksi, ['Pending', 'Menunggu', 'Desain Disetujui']))
                         <form action="{{ route('produksi.productions.start', $item->id) }}" method="POST">
                             @csrf
@@ -147,16 +160,20 @@
     </div>
 </div>
 
-{{-- MODAL KENDALA (Perbaikan Konflik CSS Hidden vs Flex) --}}
+{{-- MODAL KENDALA --}}
 <div id="modal" class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-sm transition-all items-center justify-center">
     <div class="bg-white p-6 rounded-xl w-full max-w-md shadow-2xl">
         <div class="flex justify-between items-center mb-5">
             <h3 class="font-bold text-lg text-black">Lapor Kendala</h3>
-            <button onclick="closeModal()" class="text-slate-400 hover:text-black transition text-2xl leading-none">&times;</button>
+            <button type="button" onclick="closeModal()" class="text-slate-400 hover:text-black transition text-2xl leading-none">&times;</button>
         </div>
+        
+        {{-- Form ke route storeIssue --}}
         <form action="{{ route('produksi.issues.store') }}" method="POST">
             @csrf 
+            {{-- Input Hidden ID Pesanan --}}
             <input type="hidden" name="pesanan_id" id="modal-id">
+            
             <div class="mb-5">
                 <label class="block text-sm font-bold text-slate-700 mb-2">Deskripsi Masalah</label>
                 <textarea name="deskripsi" class="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-black focus:border-transparent outline-none transition text-sm text-slate-800" rows="4" required placeholder="Jelaskan detail kendala secara singkat..."></textarea>
@@ -174,13 +191,21 @@
         document.getElementById('modal-id').value = id;
         const modal = document.getElementById('modal');
         modal.classList.remove('hidden');
-        modal.classList.add('flex'); // Tambahkan flex hanya saat dibuka
+        modal.classList.add('flex'); // Flex agar center
     }
 
     function closeModal() {
         const modal = document.getElementById('modal');
         modal.classList.add('hidden');
-        modal.classList.remove('flex'); // Hapus flex saat ditutup
+        modal.classList.remove('flex');
+    }
+
+    // Close modal ketika klik di luar area putih (opsional UX)
+    window.onclick = function(event) {
+        const modal = document.getElementById('modal');
+        if (event.target == modal) {
+            closeModal();
+        }
     }
 </script>
 @endsection
