@@ -13,15 +13,55 @@ class Pesanan extends Model
     protected $table = 'pesanans';
     protected $guarded = ['id'];
 
-    // === INI YANG MENYEBABKAN ERROR 'undefined relationship [status]' ===
-    public function status()
+     protected $fillable = [
+        'tanggal_pesanan',
+        'catatan',
+        'pelanggan_id',
+        'pengguna_id',
+        'status_pesanan_id',
+    ];
+
+    public function detailPesanans()
+    {
+        return $this->hasMany(DetailPesanan::class, 'pesanan_id');
+    }
+
+    /**
+     * Relasi ke Pembayaran (One to Many)
+     */
+    public function pembayarans()
+    {
+        return $this->hasMany(Pembayaran::class, 'pesanan_id');
+    }
+
+    /**
+     * Relasi ke Pelanggan
+     */
+    public function pelanggan()
+    {
+        return $this->belongsTo(Pelanggan::class, 'pelanggan_id');
+    }
+
+    /**
+     * Relasi ke User/Pengguna
+     */
+    public function pengguna()
+    {
+        return $this->belongsTo(Pengguna::class, 'pengguna_id');
+    }
+
+    /**
+     * Relasi ke Status Pesanan
+     */
+    public function statusPesanan()
     {
         return $this->belongsTo(StatusPesanan::class, 'status_pesanan_id');
     }
 
-    public function pelanggan()
+    // === INI YANG MENYEBABKAN ERROR 'undefined relationship [status]' ===
+    public function status()
     {
-        return $this->belongsTo(Pelanggan::class, 'pelanggan_id');
+        return $this->belongsTo(StatusPesanan::class, 'status_pesanan_id');
     }
 
     public function desain()
