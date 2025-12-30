@@ -2,33 +2,45 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Desain extends Model
 {
-    use HasFactory;
-
-    // Menghubungkan ke tabel yang sudah ada
-    protected $table = 'desains';
-
-    // Kolom yang boleh diisi
-   protected $fillable = [
-    'pesanan_id',
-    'status_desain_id',
-    'file_desain_path',
-    'catatan_revisi',
+    // Pastikan designer_id ada di tabel desains sesuai Class Diagram
+    protected $fillable = [
+        'pesanan_id', 
+        'id_status_desain', 
+        'tanggal_mulai', 
+        'tanggal_selesai', 
+        'catatan', 
+        'designer_id', // Ini foreign key ke tabel users/penggunas
+        'revisi_ke', 
+        'file_desain'
     ];
 
-    // Relasi ke Pesanan (Sesuai Foreign Key di SQL)
-    public function pesanan()
+    /**
+     * Relasi ke User (Designer) sesuai Class Diagram
+     */
+    public function designer(): BelongsTo
     {
-        return $this->belongsTo(Pesanan::class, 'pesanan_id');
+        // Jika tabel user Anda bernama 'penggunas' (berdasarkan Database Queries Anda)
+        return $this->belongsTo(User::class, 'designer_id');
     }
 
-    // Relasi ke Status Desain (Sesuai Foreign Key di SQL)
-    public function statusDesain()
+    /**
+     * Relasi ke StatusDesain
+     */
+    public function statusDesain(): BelongsTo
     {
-        return $this->belongsTo(StatusDesain::class, 'status_desain_id');
+        return $this->belongsTo(StatusDesain::class, 'id_status_desain');
+    }
+
+    /**
+     * Relasi ke Pesanan
+     */
+    public function pesanan(): BelongsTo
+    {
+        return $this->belongsTo(Pesanan::class, 'pesanan_id');
     }
 }

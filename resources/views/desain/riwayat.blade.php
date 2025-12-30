@@ -3,10 +3,10 @@
 @section('content')
 <div class="min-h-screen bg-gray-50 p-8">
     <div class="max-w-6xl mx-auto">
-        <h1 class="text-3xl font-bold text-gray-900 mb-6">Revisi</h1>
+        <h1 class="text-3xl font-bold text-gray-900 mb-6">Riwayat Desain</h1>
 
         <div class="bg-white rounded-lg shadow p-6">
-            <p class="text-gray-600">Daftar revisi yang menunggu akan ditampilkan di sini.</p>
+            <p class="text-gray-600">Lihat semua desain yang pernah dibuat</p>
         </div>
     </div>
 </div>
