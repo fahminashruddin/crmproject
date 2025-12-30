@@ -1,10 +1,9 @@
 <?php
 
-namespace App\Models\Layanans;
+namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use app\Models\Pesanans\DetailPesanan;
 class JenisLayanan extends Model
 {
     use HasFactory;
@@ -17,9 +16,6 @@ class JenisLayanan extends Model
         'harga_dasar',
     ];
 
-    /**
-     * Relasi ke Detail Pesanan (One to Many)
-     */
     public function detailPesanans()
     {
         return $this->hasMany(DetailPesanan::class);

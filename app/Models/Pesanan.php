@@ -1,15 +1,9 @@
 <?php
 
-namespace App\Models\Pesanans;
+namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use app\Models\Pesanans\DetailPesanan;
-use app\Models\Pembayarans\Pembayaran;
-use app\Models\Pelanggan;
-use app\Models\Pengguna;
-use app\Models\Pesanans\StatusPesanan;
-
 class Pesanan extends Model
 {
     use HasFactory;
@@ -29,7 +23,7 @@ class Pesanan extends Model
      */
     public function detailPesanans()
     {
-        return $this->hasMany(DetailPesanan::class);
+        return $this->hasMany(DetailPesanan::class, 'pesanan_id');
     }
 
     /**
@@ -37,7 +31,7 @@ class Pesanan extends Model
      */
     public function pembayarans()
     {
-        return $this->hasMany(Pembayaran::class);
+        return $this->hasMany(Pembayaran::class, 'pesanan_id');
     }
 
     /**
@@ -45,7 +39,7 @@ class Pesanan extends Model
      */
     public function pelanggan()
     {
-        return $this->belongsTo(Pelanggan::class);
+        return $this->belongsTo(Pelanggan::class, 'pelanggan_id');
     }
 
     /**
@@ -53,7 +47,7 @@ class Pesanan extends Model
      */
     public function pengguna()
     {
-        return $this->belongsTo(Pengguna::class);
+        return $this->belongsTo(Pengguna::class, 'pengguna_id');
     }
 
     /**
@@ -61,6 +55,6 @@ class Pesanan extends Model
      */
     public function statusPesanan()
     {
-        return $this->belongsTo(StatusPesanan::class);
+        return $this->belongsTo(StatusPesanan::class, 'status_pesanan_id');
     }
 }

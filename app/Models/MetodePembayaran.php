@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models\Pembayarans;
+namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -15,11 +15,9 @@ class MetodePembayaran extends Model
         'nama_metode',
     ];
 
-    /**
-     * Relasi ke Pembayaran (One to Many)
-     */
+
     public function pembayarans()
     {
-        return $this->hasMany(Pembayaran::class);
-    }
+        return $this->hasMany(Pembayaran::class, 'metode_pembayaran_id');
+}
 }

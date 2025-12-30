@@ -12,12 +12,11 @@ use App\Http\Controllers\AnalitikController;
 use App\Http\Controllers\ManajemenExportController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\PesananController;
+use App\Http\Controllers\PembayaranController;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-*/
+
 
 // === 1. ROUTE UNTUK TAMU (BELUM LOGIN) ===
 Route::middleware(['guest'])->group(function () {
@@ -27,29 +26,14 @@ Route::middleware(['guest'])->group(function () {
 });
 
     // Login Umum
-    Route::get('/login', [AuthController::class, 'index'])->name('login');
-    Route::post('/login', [AuthController::class, 'authenticate'])->name('login.post');
-
-    // Login Khusus per Role (Optional, diarahkan ke controller yg sama)
-    Route::prefix('admin')->name('admin.')->group(function () {
-        Route::get('login', [AuthController::class, 'index'])->name('login')->defaults('role', 'admin');
-        Route::post('login', [AuthController::class, 'authenticate'])->name('login.post')->defaults('role', 'admin');
+    Route::get('/', function () {
+        return redirect()->route('login');
     });
 
-    Route::prefix('desain')->name('desain.')->group(function () {
-        Route::get('login', [AuthController::class, 'index'])->name('login')->defaults('role', 'desain');
-        Route::post('login', [AuthController::class, 'authenticate'])->name('login.post')->defaults('role', 'desain');
-    });
+    // HANYA ADA SATU ROUTE LOGIN
+    Route::get('/login', [UserController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [UserController::class, 'login'])->name('login.post');
 
-    Route::prefix('produksi')->name('produksi.')->group(function () {
-        Route::get('login', [AuthController::class, 'index'])->name('login')->defaults('role', 'produksi');
-        Route::post('login', [AuthController::class, 'authenticate'])->name('login.post')->defaults('role', 'produksi');
-    });
-
-    Route::prefix('manajemen')->name('manajemen.')->group(function () {
-        Route::get('login', [AuthController::class, 'index'])->name('login')->defaults('role', 'manajemen');
-        Route::post('login', [AuthController::class, 'authenticate'])->name('login.post')->defaults('role', 'manajemen');
-    });
 });
 
 // === 2. HELPER FUNCTION UNTUK REDIRECT ===
@@ -71,7 +55,7 @@ if (!function_exists('checkRoleRedirect')) {
             }
             abort(403, 'Anda tidak memiliki akses ke halaman ini.');
         }
-        return redirect()->route($roleName . '.login');
+        return redirect()->route('login');
     }
 }
 
@@ -92,19 +76,26 @@ Route::middleware(['auth'])->group(function () {
 
     // --- A. AREA ADMIN ---
     Route::prefix('admin')->name('admin.')->group(function () {
-        Route::get('dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
-        Route::get('orders', [AdminController::class, 'orders'])->name('orders');
-        Route::post('orders', [AdminController::class, 'storeOrder'])->name('orders.store');
-        Route::patch('orders/{id}/update', [AdminController::class, 'updateOrder'])->name('orders.update');
-        Route::get('payments', [AdminController::class, 'payments'])->name('payments');
-        Route::post('payments/{id}/verify', [AdminController::class, 'verifyPayment'])->name('payments.verify');
-        Route::post('payments/{id}/reject', [AdminController::class, 'rejectPayment'])->name('payments.reject');
-        Route::get('users', [AdminController::class, 'users'])->name('users');
-        Route::post('users', [AdminController::class, 'storeUser'])->name('users.store');
-        Route::delete('users/{id}', [AdminController::class, 'destroyUser'])->name('users.destroy');
-        Route::patch('users/{id}/toggle', [AdminController::class, 'toggleUserStatus'])->name('users.toggle');
+        Route::get('dashboard', [AdminController::class, 'index'])->name('dashboard');
+
+        Route::get('orders', [PesananController::class, 'index'])->name('orders');
+        Route::post('orders', [PesananController::class, 'store'])->name('orders.store');
+        Route::patch('orders/{id}/status', [PesananController::class, 'updateStatusPesanan'])->name('orders.updateStatus');
+
+        Route::get('payments', [PembayaranController::class, 'index'])->name('payments');
+        Route::post('payments/{id}/verify', [PembayaranController::class, 'verifyPayment'])->name('payments.verify');
+        Route::post('payments/{id}/reject', [PembayaranController::class, 'rejectPayment'])->name('payments.reject');
+
+        Route::get('users', [UserController::class, 'index'])->name('users');
+        Route::post('users', [UserController::class, 'store'])->name('users.store');
+        Route::delete('users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
+        Route::post('users/{id}/password', [UserController::class, 'changePassword'])->name('users.password');
+        // Route::patch('users/{id}/toggle', [UserController::class, 'toggleUserStatus'])->name('users.toggle');
+
         Route::get('settings', [AdminController::class, 'settings'])->name('settings');
-        Route::get('notifications', [AdminController::class, 'notifications'])->name('notifications');
+
+        Route::get('/notifications', [AdminController::class, 'notifications'])->name('notifications');
+        Route::post('/notifications/read', [AdminController::class, 'markNotificationsAsRead'])->name('notifications.read');
     });
 
     // --- B. AREA DESAIN ---

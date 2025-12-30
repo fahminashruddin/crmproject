@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('admin.layout')
 
 @section('content')
     <div class="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -68,13 +68,13 @@
                 @forelse($pesananTerbaru as $order)
                 <div class="flex items-center justify-between p-4 rounded-lg bg-slate-50 border border-transparent hover:border-gray-200 transition-colors">
                     <div>
-                        <h3 class="font-bold text-slate-900 text-sm">{{ $order->pelanggan_nama }}</h3>
-                        <p class="text-xs text-slate-500 mt-1">{{ $order->jenis_layanan ?? 'Layanan Cetak' }}</p>
+                        <h3 class="font-bold text-slate-900 text-sm">{{ $order->pelanggan->nama }}</h3>
+                        <p class="text-xs text-slate-500 mt-1">{{ $order->detailPesanans->first()?->jenisLayanan->nama_layanan ?? 'Layanan Cetak' }}</p>
                     </div>
 
                     @php
-                        $status = strtolower($order->nama_status);
-                        $badgeText = $order->nama_status;
+                        $status = strtolower($order->statusPesanan->nama_status);
+                        $badgeText = $order->statusPesanan->nama_status;
                         if ($status == 'desain') $badgeText = 'Proses Desain';
                         if ($status == 'pending') $badgeText = 'Menunggu Konfirmasi';
                         if ($status == 'produksi') $badgeText = 'Produksi';
@@ -108,7 +108,7 @@
                         </div>
                     </div>
                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border border-gray-200 text-slate-600 bg-white">
-                        {{ ucfirst($user->nama_role) }}
+                        {{ ucfirst($user->role->nama_role ?? 'User') }}
                     </span>
                 </div>
                 @empty

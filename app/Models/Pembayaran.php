@@ -1,10 +1,9 @@
 <?php
 
-namespace App\Models\Pembayarans;
+namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use app\Models\Pesanans\Pesanan;
 
 class Pembayaran extends Model
 {
@@ -21,19 +20,17 @@ class Pembayaran extends Model
         'metode_pembayaran_id',
     ];
 
-    /**
-     * Relasi ke Pesanan (Many to One)
-     */
     public function pesanan()
     {
-        return $this->belongsTo(Pesanan::class);
+        return $this->belongsTo(Pesanan::class, 'pesanan_id');
     }
 
     /**
      * Relasi ke Metode Pembayaran
+     * Asumsi: MetodePembayaran.php juga sudah ada di folder App\Models
      */
     public function metodePembayaran()
     {
-        return $this->belongsTo(MetodePembayaran::class);
+        return $this->belongsTo(MetodePembayaran::class, 'metode_pembayaran_id');
     }
 }
