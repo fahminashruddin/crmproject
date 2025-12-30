@@ -17,11 +17,10 @@ class StatusPesanan extends Model
     ];
 
     /**
-     * Relasi ke Pesanan (One to Many)
-     * Satu status bisa digunakan oleh banyak pesanan
+     * Satu status pesanan bisa dimiliki banyak pesanan
      */
     public function pesanans()
     {
-        return $this->hasMany(Pesanan::class);
+        return $this->hasMany(Pesanan::class, 'status_pesanan_id');
     }
 }
