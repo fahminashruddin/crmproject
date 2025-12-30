@@ -105,5 +105,6 @@ class ProduksiSeeder extends Seeder
                 'updated_at'      => now(),
             ]);
         }
+        
     }
 }
