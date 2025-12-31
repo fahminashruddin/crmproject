@@ -193,9 +193,25 @@ class DesainController extends Controller
 }
 
  public function riwayat()
-    {
-        return view('desain.riwayat');
-    }
+{
+    $riwayat = DB::table('desains')
+        ->join('pesanans', 'desains.pesanan_id', '=', 'pesanans.id')
+        ->join('pelanggans', 'pesanans.pelanggan_id', '=', 'pelanggans.id')
+        ->join('status_desains', 'desains.status_desain_id', '=', 'status_desains.id')
+        ->where('desains.status_desain_id', 4) // Disetujui
+        ->select(
+            DB::raw("CONCAT('ORD-', LPAD(pesanans.id, 3, '0')) as nomor_order"),
+            'pelanggans.nama as nama_pelanggan',
+            'desains.file_desain_path',
+            'status_desains.nama_status',
+            'desains.updated_at'
+        )
+        ->orderBy('desains.updated_at', 'desc')
+        ->get();
+
+    return view('desain.riwayat', compact('riwayat'));
+}
+
     // Fungsi pendukung lainnya (Inventory, Jadwal, Pengaturan) tetap dipertahankan...
    
     public function pengaturan() {
