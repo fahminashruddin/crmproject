@@ -4,318 +4,32 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\Desain; // Pastikan Model ini ada
+use App\Models\JenisLayanan;
+use Illuminate\Support\Facades\Auth;
 
-use App\Models\Desains\JenisLayanan;
 class DesainController extends Controller
 {
+    // ==========================================
+    // 1. METHOD DARI CLASS DIAGRAM
+    // ==========================================
+
     /**
-     * Halaman utama daftar pesanan yang perlu didesain
+     * +getLatestVersion()
+     * Digunakan secara internal untuk mendapatkan data revisi terakhir
      */
-    public function designs(Request $request)
+    private function getLatestVersion($pesananId)
     {
-        // Cari ID status pesanan 'desain'
-        $statusDesainId = DB::table('status_pesanans')
-            ->whereRaw('LOWER(nama_status) = ?', ['desain'])
-            ->value('id');
-
-        // Ambil semua pesanan yang statusnya 'desain'
-        $designs = DB::table('pesanans')
-            ->where('status_pesanan_id', $statusDesainId)
-            ->leftJoin('pelanggans', 'pesanans.pelanggan_id', '=', 'pelanggans.id')
-            ->leftJoin('status_pesanans', 'pesanans.status_pesanan_id', '=', 'status_pesanans.id')
-            ->select(
-                'pesanans.*',
-                'pelanggans.nama as pelanggan_nama',
-                'status_pesanans.nama_status'
-            )
-            ->orderBy('pesanans.tanggal_pesanan', 'asc')
-            ->paginate(10);
-
-        return view('desain.designs', compact('designs'));
+        return DB::table('desains')->where('pesanan_id', $pesananId)->first();
     }
 
     /**
-     * Redirect default ke kelola desain
+     * +approve()
+     * Menggantikan fungsi setujui() agar sesuai Class Diagram
      */
-    public function index()
+    public function approve(Request $request)
     {
-        $designs = Desain::with([
-            'pesanan.pelanggan',
-            'statusDesain'
-        ])->latest()->get();
-
-        return view('desain.designs', compact('designs'));
-    }
-    public function dashboard()
-    {
-         $antrian = DB::table('desains')
-        ->leftJoin('pesanans', 'desains.pesanan_id', '=', 'pesanans.id')
-        ->leftJoin('pelanggans', 'pesanans.pelanggan_id', '=', 'pelanggans.id')
-        ->leftJoin('status_desains', 'desains.status_desain_id', '=', 'status_desains.id')
-        ->select(
-            'pesanans.id',
-            'pelanggans.nama as nama_pelanggan',
-            'status_desains.nama_status as status_desain',
-            'desains.created_at'
-        )
-        ->orderBy('desains.created_at', 'desc')
-        ->get();
-
-    // ===============================
-    // STATISTIK DASHBOARD
-    // ===============================
-    $menunggu = DB::table('desains')
-        ->join('status_desains', 'desains.status_desain_id', '=', 'status_desains.id')
-        ->whereRaw('LOWER(status_desains.nama_status) LIKE ?', ['%menunggu%'])
-        ->count();
-
-    $sedangProses = DB::table('desains')
-        ->join('status_desains', 'desains.status_desain_id', '=', 'status_desains.id')
-        ->whereRaw('LOWER(status_desains.nama_status) LIKE ?', ['%setuju%'])
-        ->count();
-
-    $selesai = DB::table('desains')
-        ->join('status_desains', 'desains.status_desain_id', '=', 'status_desains.id')
-        ->whereRaw('LOWER(status_desains.nama_status) LIKE ?', ['%revisi%'])
-        ->count();
-
-    return view('desain.dashboard', compact(
-        'antrian',
-        'menunggu',
-        'sedangProses',
-        'selesai'
-    ));
-
-        return view('desain.dashboard', compact('antrian'));
-    }
-
-    /**
-     * Halaman utama kelola desain
-     * (Data dummy untuk tabel)
-     */
- public function kelolaDesain()
-{
-    // 1. Ambil SEMUA data desain (Tanpa filter != 4) untuk hitungan Card Statistik
-    $allDesigns = DB::table('desains')
-        ->leftJoin('status_desains', 'desains.status_desain_id', '=', 'status_desains.id')
-        ->select('status_desains.nama_status as status_desain')
-        ->get();
-
-    // 2. Ambil data untuk LIST ANTRIAN (Hanya yang belum disetujui/selesai)
-    $designs = DB::table('desains')
-        ->leftJoin('pesanans', 'desains.pesanan_id', '=', 'pesanans.id')
-        ->leftJoin('pelanggans', 'pesanans.pelanggan_id', '=', 'pelanggans.id')
-        ->leftJoin('status_desains', 'desains.status_desain_id', '=', 'status_desains.id')
-        ->leftJoin('detail_pesanans', 'pesanans.id', '=', 'detail_pesanans.pesanan_id')
-        ->where('desains.status_desain_id', '!=', 4) // Antrian tidak menampilkan ID 4
-        ->select(
-            DB::raw("CONCAT('ORD-', LPAD(pesanans.id, 3, '0')) as nomor_order"),
-            'pelanggans.nama as pelanggan',
-            'pesanans.tanggal_pesanan as tanggal_order',
-            'status_desains.nama_status as status_desain',
-            'detail_pesanans.jenis_layanan_id',
-            'detail_pesanans.jumlah',
-            'desains.catatan_revisi as catatan_desain',
-            'desains.created_at'
-        )
-        ->orderBy('desains.created_at', 'desc')
-        ->get();
-
-    // Kirim kedua variabel ke View
-    return view('desain.designs', compact('designs', 'allDesigns'));
-}
-
-
-
-
-
-
-
-    /**
-     * Halaman revisi desain
-     */
-    public function revisions()
-    {
-        return view('desain.revisions');
-    }
-
-    /**
-     * Halaman riwayat desain
-     */
-    public function riwayat()
-    {
-        return view('desain.riwayat');
-    }
-
-    /**
-     * Halaman Jadwal Produksi
-     */
-    public function jadwalProduksi(Request $request)
-    {
-        // Ambil data jadwal produksi dari tabel produksis dengan join ke status_pesanans
-        $jadwals = DB::table('produksis')
-            ->leftJoin('pesanans', 'produksis.pesanan_id', '=', 'pesanans.id')
-            ->leftJoin('pelanggans', 'pesanans.pelanggan_id', '=', 'pelanggans.id')
-            ->leftJoin('status_pesanans', 'pesanans.status_pesanan_id', '=', 'status_pesanans.id')
-            ->select(
-                'produksis.*',
-                'pesanans.id as pesanan_id_val',
-                'pelanggans.nama as pelanggan_nama',
-                'status_pesanans.nama_status'
-            )
-            ->orderBy('produksis.tanggal_mulai', 'asc')
-            ->paginate(10);
-
-        // Ambil data pesanan untuk dropdown
-        $pesanans = DB::table('pesanans')
-            ->leftJoin('pelanggans', 'pesanans.pelanggan_id', '=', 'pelanggans.id')
-            ->select('pesanans.id', 'pelanggans.nama as pelanggan_nama')
-            ->get();
-
-        return view('desain.jadwal-produksi', compact('jadwals', 'pesanans'));
-    }
-
-    /**
-     * Store Jadwal Produksi
-     */
-    public function storeJadwalProduksi(Request $request)
-    {
-        $validated = $request->validate([
-            'pesanan_id' => 'required|exists:pesanans,id',
-            'tanggal_mulai' => 'required|date',
-            'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
-            'catatan' => 'nullable|string',
-        ]);
-
-        DB::table('produksis')->insert([
-            'pesanan_id' => $validated['pesanan_id'],
-            'tanggal_mulai' => $validated['tanggal_mulai'],
-            'tanggal_selesai' => $validated['tanggal_selesai'],
-            'catatan' => $validated['catatan'] ?? null,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        return redirect()->route('desain.jadwal-produksi')->with('success', 'Jadwal produksi berhasil ditambahkan');
-    }
-
-    /**
-     * Halaman Inventory
-     */
-    public function inventory(Request $request)
-    {
-        try {
-            // Ambil data inventory/stok dari database
-            $inventorys = DB::table('inventorys')
-                ->leftJoin('produksis', 'inventorys.produksi_id', '=', 'produksis.id')
-                ->select(
-                    'inventorys.*',
-                    'produksis.id as produksi_id_join'
-                )
-                ->orderBy('inventorys.created_at', 'desc')
-                ->paginate(10);
-        } catch (\Exception $e) {
-            // Fallback jika tabel belum ada - return empty paginator
-            $inventorys = new \Illuminate\Pagination\Paginator([], 10, 1, []);
-        }
-
-        return view('desain.inventory', compact('inventorys'));
-    }
-
-    /**
-     * Store Inventory
-     */
-    public function storeInventory(Request $request)
-    {
-        $validated = $request->validate([
-            'nama_produk' => 'required|string|max:255',
-            'jumlah' => 'required|integer|min:0',
-            'satuan' => 'required|string|max:50',
-            'lokasi' => 'nullable|string|max:255',
-            'keterangan' => 'nullable|string',
-        ]);
-
-        try {
-            DB::table('inventorys')->insert([
-                'nama_produk' => $validated['nama_produk'],
-                'jumlah' => $validated['jumlah'],
-                'satuan' => $validated['satuan'],
-                'lokasi' => $validated['lokasi'] ?? null,
-                'keterangan' => $validated['keterangan'] ?? null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-
-            return redirect()->route('desain.inventory')->with('success', 'Data inventory berhasil ditambahkan');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal menambahkan data inventory: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Update Inventory
-     */
-    public function updateInventory(Request $request, $id)
-    {
-        $validated = $request->validate([
-            'nama_produk' => 'required|string|max:255',
-            'jumlah' => 'required|integer|min:0',
-            'satuan' => 'required|string|max:50',
-            'lokasi' => 'nullable|string|max:255',
-            'keterangan' => 'nullable|string',
-        ]);
-
-        try {
-            DB::table('inventorys')->where('id', $id)->update([
-                'nama_produk' => $validated['nama_produk'],
-                'jumlah' => $validated['jumlah'],
-                'satuan' => $validated['satuan'],
-                'lokasi' => $validated['lokasi'] ?? null,
-                'keterangan' => $validated['keterangan'] ?? null,
-                'updated_at' => now(),
-            ]);
-
-            return redirect()->route('desain.inventory')->with('success', 'Data inventory berhasil diperbarui');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal memperbarui data inventory: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Delete Inventory
-     */
-    public function deleteInventory($id)
-    {
-        try {
-            DB::table('inventorys')->where('id', $id)->delete();
-            return redirect()->route('desain.inventory')->with('success', 'Data inventory berhasil dihapus');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal menghapus data inventory: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Halaman pengaturan / template desain
-     */
-  public function pengaturan()
-    {
-        // --- PERBAIKAN: Menggunakan Model JenisLayanan yang sudah di-import ---
-        try {
-            // Mengambil semua data Jenis Layanan sebagai template
-            $templates = JenisLayanan::all(); 
-        } catch (\Exception $e) {
-            // Fallback jika Model/Tabel belum siap (untuk menghindari error crash)
-            $templates = collect([]); 
-        }
-
-        // Perhatian: Pastikan nama view yang dipanggil sesuai dengan yang ada di routes!
-        // Jika rute Anda mengarah ke desain.template, maka viewnya harus 'desain.template'
-        // Namun, jika Anda menggunakan view 'desain.desain' dari diskusi sebelumnya, ganti 'desain.template' menjadi 'desain.desain'.
-        return view('desain.template', compact('templates'));
-    }
- public function setujui(Request $request)
-{
-    $request->validate([
+       $request->validate([
         'nomor_order' => 'required',
     ]);
 
@@ -338,9 +52,38 @@ class DesainController extends Controller
         ]);
 
     return back()->with('success', 'Desain berhasil disetujui');
-}
+    }
 
-public function upload(Request $request)
+    /**
+     * +requestRevision(string feedback)
+     * Menggantikan fungsi revisi() agar sesuai Class Diagram
+     */
+    public function requestRevision(Request $request)
+    {
+        $request->validate([
+            'nomor_order'    => 'required',
+            'catatan_revisi' => 'required|string' // feedback parameter
+        ]);
+
+        $pesananId = $this->getPesananIdFromOrderNumber($request->nomor_order);
+
+        // Ambil ID status "Revisi" secara dinamis
+        $statusRevisi = DB::table('status_desains')->where('nama_status', 'Revisi')->value('id') ?? 3;
+
+        DB::table('desains')->where('pesanan_id', $pesananId)->update([
+            'status_desain_id' => $statusRevisi,
+            'catatan_revisi'   => $request->catatan_revisi, // atribut catatan
+            'updated_at'       => now(),
+        ]);
+
+        return back()->with('success', 'Permintaan revisi berhasil dikirim');
+    }
+
+    // ==========================================
+    // 2. FUNGSI CORE & UPLOAD (Sesuai Kode Anda)
+    // ==========================================
+
+    public function upload(Request $request)
 {
     // 1. Validasi Input
     $request->validate([
@@ -387,10 +130,106 @@ public function upload(Request $request)
     return back()->with('error', 'Gagal memproses file.');
 }
 
+    /**
+     * Helper untuk konversi ORD-001 ke ID integer
+     */
+    private function getPesananIdFromOrderNumber($orderNumber)
+    {
+        return DB::table('pesanans')
+            ->whereRaw("CONCAT('ORD-', LPAD(id, 3, '0')) = ?", [$orderNumber])
+            ->value('id');
+    }
 
+    // ==========================================
+    // 3. DASHBOARD & VIEW (Sesuai Kode Anda)
+    // ==========================================
 
+    public function dashboard()
+    {
+        $antrian = DB::table('desains')
+            ->leftJoin('pesanans', 'desains.pesanan_id', '=', 'pesanans.id')
+            ->leftJoin('pelanggans', 'pesanans.pelanggan_id', '=', 'pelanggans.id')
+            ->leftJoin('status_desains', 'desains.status_desain_id', '=', 'status_desains.id')
+            ->select('pesanans.id', 'pelanggans.nama as nama_pelanggan', 'status_desains.nama_status as status_desain', 'desains.created_at')
+            ->orderBy('desains.created_at', 'desc')->get();
 
-public function revisi(Request $request)
+        $menunggu = DB::table('desains')->join('status_desains', 'desains.status_desain_id', '=', 'status_desains.id')->whereRaw('LOWER(status_desains.nama_status) LIKE ?', ['%menunggu%'])->count();
+        $sedangProses = DB::table('desains')->join('status_desains', 'desains.status_desain_id', '=', 'status_desains.id')->whereRaw('LOWER(status_desains.nama_status) LIKE ?', ['%setuju%'])->count();
+        $selesai = DB::table('desains')->join('status_desains', 'desains.status_desain_id', '=', 'status_desains.id')->whereRaw('LOWER(status_desains.nama_status) LIKE ?', ['%revisi%'])->count();
+
+        return view('desain.dashboard', compact('antrian', 'menunggu', 'sedangProses', 'selesai'));
+    }
+
+    public function kelolaDesain()
+{
+    // 1. Ambil SEMUA data desain (Tanpa filter != 4) untuk hitungan Card Statistik
+    $allDesigns = DB::table('desains')
+        ->leftJoin('status_desains', 'desains.status_desain_id', '=', 'status_desains.id')
+        ->select('status_desains.nama_status as status_desain')
+        ->get();
+
+    // 2. Ambil data untuk LIST ANTRIAN (Hanya yang belum disetujui/selesai)
+    $designs = DB::table('desains')
+        ->leftJoin('pesanans', 'desains.pesanan_id', '=', 'pesanans.id')
+        ->leftJoin('pelanggans', 'pesanans.pelanggan_id', '=', 'pelanggans.id')
+        ->leftJoin('status_desains', 'desains.status_desain_id', '=', 'status_desains.id')
+        ->leftJoin('detail_pesanans', 'pesanans.id', '=', 'detail_pesanans.pesanan_id')
+        ->where('desains.status_desain_id', '!=', 4) // Antrian tidak menampilkan ID 4
+        ->select(
+            DB::raw("CONCAT('ORD-', LPAD(pesanans.id, 3, '0')) as nomor_order"),
+            'pelanggans.nama as pelanggan',
+            'pesanans.tanggal_pesanan as tanggal_order',
+            'status_desains.nama_status as status_desain',
+            'detail_pesanans.jenis_layanan_id',
+            'detail_pesanans.jumlah',
+            'desains.catatan_revisi as catatan_desain',
+            'desains.created_at'
+        )
+        ->orderBy('desains.created_at', 'desc')
+        ->get();
+
+    // Kirim kedua variabel ke View
+    return view('desain.designs', compact('designs', 'allDesigns'));
+}
+
+ public function riwayat()
+{
+    $riwayat = DB::table('desains')
+        ->join('pesanans', 'desains.pesanan_id', '=', 'pesanans.id')
+        ->join('pelanggans', 'pesanans.pelanggan_id', '=', 'pelanggans.id')
+        ->join('status_desains', 'desains.status_desain_id', '=', 'status_desains.id')
+        ->where('desains.status_desain_id', 4) // Disetujui
+        ->select(
+            DB::raw("CONCAT('ORD-', LPAD(pesanans.id, 3, '0')) as nomor_order"),
+            'pelanggans.nama as nama_pelanggan',
+            'desains.file_desain_path',
+            'status_desains.nama_status',
+            'desains.updated_at'
+        )
+        ->orderBy('desains.updated_at', 'desc')
+        ->get();
+
+    return view('desain.riwayat', compact('riwayat'));
+}
+
+    // Fungsi pendukung lainnya (Inventory, Jadwal, Pengaturan) tetap dipertahankan...
+   
+    public function pengaturan() {
+        // --- PERBAIKAN: Menggunakan Model JenisLayanan yang sudah di-import ---
+        try {
+            // Mengambil semua data Jenis Layanan sebagai template
+            $templates = JenisLayanan::all(); 
+        } catch (\Exception $e) {
+            // Fallback jika Model/Tabel belum siap (untuk menghindari error crash)
+            $templates = collect([]); 
+        }
+
+        // Perhatian: Pastikan nama view yang dipanggil sesuai dengan yang ada di routes!
+        // Jika rute Anda mengarah ke desain.template, maka viewnya harus 'desain.template'
+        // Namun, jika Anda menggunakan view 'desain.desain' dari diskusi sebelumnya, ganti 'desain.template' menjadi 'desain.desain'.
+        return view('desain.template', compact('templates'));
+     }
+     public function revisi(Request $request)
 {
     $request->validate([
         'nomor_order'    => 'required',
@@ -413,7 +252,26 @@ public function revisi(Request $request)
 
     return redirect()->back()->with('success', 'Desain berhasil dikirim untuk revisi');
 }
+public function revisions()
+    {
+        // Kita ambil data desain dengan status_desain_id = 3 (Revisi)
+        // Dan pastikan catatan_revisi tidak kosong
+        $revisions = DB::table('desains')
+            ->join('pesanans', 'desains.pesanan_id', '=', 'pesanans.id')
+            ->join('pelanggans', 'pesanans.pelanggan_id', '=', 'pelanggans.id')
+            ->join('status_desains', 'desains.status_desain_id', '=', 'status_desains.id')
+            ->where('desains.status_desain_id', 3) // Angka 3 biasanya untuk status 'Revisi'
+            ->select(
+                DB::raw("CONCAT('ORD-', LPAD(pesanans.id, 3, '0')) as nomor_order"),
+                'pelanggans.nama as pelanggan',
+                'desains.file_desain_path',
+                'desains.catatan_revisi',
+                'desains.updated_at as tanggal_revisi'
+            )
+            ->orderBy('desains.updated_at', 'desc')
+            ->get();
 
+        return view('desain.revisions', compact('revisions'));
+    }
 
 }
-

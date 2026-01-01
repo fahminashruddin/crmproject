@@ -98,18 +98,27 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/notifications/read', [AdminController::class, 'markNotificationsAsRead'])->name('notifications.read');
     });
 
-    // --- B. AREA DESAIN ---
-    Route::prefix('desain')->middleware(['auth'])->group(function () {
+   Route::prefix('desain')->middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DesainController::class, 'dashboard'])->name('desain.dashboard');
-    Route::get('/kelola', [DesainController::class, 'kelolaDesain'])->name('desain.kelola');
+    
+    // SESUAIKAN: Jika di controller namanya 'kelolaDesain', rute harus memanggil 'kelolaDesain'
     Route::get('/designs', [DesainController::class, 'kelolaDesain'])->name('desain.designs');
+    Route::get('/kelola', [DesainController::class, 'kelolaDesain'])->name('desain.kelola');
+
+    // SESUAIKAN: Di controller Anda namanya 'upload', bukan 'store'
+    Route::post('/upload', [DesainController::class, 'upload'])->name('desain.upload');
+
+    // SESUAIKAN: Di controller Anda namanya 'revisi', bukan 'requestRevision'
+    Route::post('/revisi', [DesainController::class, 'revisi'])->name('desain.revisi');
+
+    // SESUAIKAN: Di controller Anda namanya 'setujui', bukan 'approve'
+    Route::post('/setujui', [DesainController::class, 'approve'])->name('desain.setujui');
+
+    // Route tambahan tetap sama
     Route::get('/revisions', [DesainController::class, 'revisions'])->name('desain.revisions');
     Route::get('/riwayat', [DesainController::class, 'riwayat'])->name('desain.riwayat');
     Route::get('/template', [DesainController::class, 'pengaturan'])->name('desain.template');
-    Route::post('/upload', [DesainController::class, 'upload'])->name('desain.upload');
-    Route::post('/revisi', [DesainController::class, 'revisi'])->name('desain.revisi');
-    Route::post('/setujui', [DesainController::class, 'setujui'])->name('desain.setujui');
-    });
+});
 
     // --- C. AREA PRODUKSI (LENGKAP DENGAN FITUR BARU) ---
     Route::prefix('produksi')->name('produksi.')->group(function () {
