@@ -4,10 +4,36 @@
 
 @section('content')
 
+<div class="mb-4">
+    @if(session('success'))
+        <div class="p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 border border-green-200" role="alert">
+            <span class="font-medium">Berhasil!</span> {{ session('success') }}
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 border border-red-200" role="alert">
+            <span class="font-medium">Gagal!</span> {{ session('error') }}
+        </div>
+    @endif
+
+    @if ($errors->any())
+        <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 border border-red-200">
+            <span class="font-medium">Terjadi Kesalahan:</span>
+            <ul class="mt-1 list-disc list-inside">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+</div>
+
+
 @php
     // Hitung statistik dari SEMUA data (allDesigns)
     $allDesigns = collect($allDesigns ?? []);
-    
+
     $inProgress = $allDesigns->filter(fn($item) => strtolower($item->status_desain ?? '') == 'menunggu')->count();
     $revisi     = $allDesigns->filter(fn($item) => strtolower($item->status_desain ?? '') == 'revisi')->count();
     $done       = $allDesigns->filter(fn($item) => strtolower($item->status_desain ?? '') == 'disetujui')->count();

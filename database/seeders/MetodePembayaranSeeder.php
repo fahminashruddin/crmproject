@@ -17,9 +17,9 @@ class MetodePembayaranSeeder extends Seeder
         $metode = [
             'Transfer Bank (BCA)',
             'Transfer Bank (Mandiri)',
-            'QRIS (Gopay/Dana/OVO)',
-            'Tunai / Cash',
-            'Tempo / Hutang', // Untuk pelanggan korporat
+            'QRIS',
+            'OVO',
+            'Dana', // Untuk pelanggan korporat
         ];
 
         foreach ($metode as $name) {

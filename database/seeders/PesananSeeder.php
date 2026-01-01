@@ -8,9 +8,7 @@ use Illuminate\Support\Facades\DB;
 
 class PesananSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
+
     public function run(): void
     {
         // Pastikan ada data pelanggan terlebih dahulu - tambahkan jika kurang
@@ -18,7 +16,7 @@ class PesananSeeder extends Seeder
         if ($existingPelanggans < 5) {
             $existingEmails = DB::table('pelanggans')->pluck('email')->toArray();
             $newPelanggans = [];
-            
+
             for ($i = 0; $i < 5 - $existingPelanggans; $i++) {
                 $email = 'pelanggan' . uniqid() . '@example.com';
                 $newPelanggans[] = [
@@ -30,7 +28,7 @@ class PesananSeeder extends Seeder
                     'updated_at' => now(),
                 ];
             }
-            
+
             if (!empty($newPelanggans)) {
                 DB::table('pelanggans')->insert($newPelanggans);
             }
@@ -59,16 +57,16 @@ class PesananSeeder extends Seeder
             $pengguna = DB::table('penggunas')->first();
             $statusPending = DB::table('status_pesanans')->where('nama_status', 'Pending')->first();
             $statusDiproses = DB::table('status_pesanans')->where('nama_status', 'Diproses')->first();
-            
+
             // Debug
             $pelangganCount = count($pelanggans);
             $penggunaExist = $pengguna ? 1 : 0;
             $statusExist = $statusPending ? 1 : 0;
-            
+
             if ($pelangganCount == 0 || !$pengguna || !$statusPending) {
                 throw new \Exception("Seeder tidak lengkap: pelanggans=$pelangganCount, pengguna=$penggunaExist, status=$statusExist");
             }
-            
+
             $pesananBaru = [];
             for ($i = 0; $i < 5 - $existingPesanan; $i++) {
                 $pesananBaru[] = [
@@ -81,7 +79,7 @@ class PesananSeeder extends Seeder
                     'updated_at' => now(),
                 ];
             }
-            
+
             if (!empty($pesananBaru)) {
                 DB::table('pesanans')->insert($pesananBaru);
             }

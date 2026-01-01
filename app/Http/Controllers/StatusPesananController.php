@@ -6,5 +6,8 @@ use Illuminate\Http\Request;
 
 class StatusPesananController extends Controller
 {
-    //
+    public function getNextStatus()
+    {
+        return 0;
+    }
 }

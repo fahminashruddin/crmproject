@@ -36,7 +36,6 @@ Route::middleware(['guest'])->group(function () {
 
 });
 
-// === 2. HELPER FUNCTION UNTUK REDIRECT ===
 if (!function_exists('checkRoleRedirect')) {
     function checkRoleRedirect($roleName) {
         // Cek apakah tabel roles ada & role tersebut ada
@@ -90,17 +89,17 @@ Route::middleware(['auth'])->group(function () {
         Route::post('users', [UserController::class, 'store'])->name('users.store');
         Route::delete('users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
         Route::post('users/{id}/password', [UserController::class, 'changePassword'])->name('users.password');
-        // Route::patch('users/{id}/toggle', [UserController::class, 'toggleUserStatus'])->name('users.toggle');
 
         Route::get('settings', [AdminController::class, 'settings'])->name('settings');
 
         Route::get('/notifications', [AdminController::class, 'notifications'])->name('notifications');
         Route::post('/notifications/read', [AdminController::class, 'markNotificationsAsRead'])->name('notifications.read');
     });
+    
 
    Route::prefix('desain')->middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DesainController::class, 'dashboard'])->name('desain.dashboard');
-    
+
     // SESUAIKAN: Jika di controller namanya 'kelolaDesain', rute harus memanggil 'kelolaDesain'
     Route::get('/designs', [DesainController::class, 'kelolaDesain'])->name('desain.designs');
     Route::get('/kelola', [DesainController::class, 'kelolaDesain'])->name('desain.kelola');

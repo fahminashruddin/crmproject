@@ -56,8 +56,8 @@
                     <div class="border border-gray-200 rounded-lg p-4">
                         <div class="flex justify-between items-start mb-3">
                             <div class="text-sm">
-                                <h3 class="font-bold text-slate-900">ORD-{{ $payment->order_id ?? 'N/A' }}</h3>
-                                <p class="text-slate-600">{{ $payment->customer_name }}</p>
+                                <h3 class="font-bold text-slate-900">ORD-{{ $payment->pesanan->id ?? 'N/A' }}</h3>
+                                <p class="text-slate-600">{{ $payment->pesanan->pelanggan->nama }}</p>
                                 <p class="text-xs text-slate-400">{{ \Carbon\Carbon::parse($payment->created_at)->format('d M Y') }}</p>
                             </div>
                             <div class="text-right">
@@ -107,12 +107,12 @@
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg hover:bg-slate-50 transition-colors">
                         <div class="mb-2 sm:mb-0">
                             <div class="flex items-center gap-2">
-                                <span class="font-bold text-slate-900 text-lg">ORD-{{ str_pad($payment->order_id, 3, '0', STR_PAD_LEFT) }}</span>
-                                <span class="text-slate-600 font-medium">- {{ $payment->customer_name }}</span>
+                                <span class="font-bold text-slate-900 text-lg">ORD-{{ str_pad($payment->pesanan->id, 3, '0', STR_PAD_LEFT) }}</span>
+                                <span class="text-slate-600 font-medium">- {{ $payment->pesanan->pelanggan->nama }}</span>
                             </div>
                             <p class="text-sm text-slate-500 mt-1">
                                 {{-- Tampilkan nama metode, jika null tampilkan strip --}}
-                                {{ $payment->nama_metode ?? '-' }}
+                                {{ $payment->metodePembayaran->nama_metode ?? '-' }}
                                 <span class="mx-1">•</span>
                                 {{ \Carbon\Carbon::parse($payment->created_at)->format('d M Y H:i') }}
                             </p>
